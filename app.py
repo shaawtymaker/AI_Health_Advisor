@@ -1,13 +1,53 @@
 """
 Rural Health Triage Assistant — Gradio MVP
 Offline AI symptom checker (English + Hindi)
+Features: Text/Voice input, SHAP explainability, TTS output, bilingual UI
 Run:  python app.py
 """
 
-import json, textwrap
+import json, os, textwrap, tempfile, traceback
 import numpy as np
 import gradio as gr
 from xgboost import XGBClassifier
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  UI TEXT — BILINGUAL LABELS                                           ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+
+UI_TEXT = {
+    "en": {
+        "title":          "# 🏥 Rural Health Triage Assistant",
+        "subtitle":       "### AI-powered offline symptom checker · English + Hindi\n*Tell us your symptoms — get instant guidance.*\n---",
+        "lang_label":     "Language / भाषा",
+        "age_label":      "Age",
+        "gender_label":   "Gender",
+        "gender_choices": ["Male", "Female"],
+        "symptom_label":  "Symptoms 🩺",
+        "symptom_placeholder": "Describe symptoms… e.g. 'fever, headache, chills'",
+        "voice_label":    "🎤 Voice Input (optional — record your symptoms)",
+        "submit":         "🔍  Check",
+        "result_label":   "Result",
+        "audio_label":    "🔊 Listen to Advice",
+        "examples_label": "📝 Try these test cases",
+        "footer":         "---\n*Model: XGBoost (<1 MB) · 100% offline · No data stored · Not a medical device — always consult a health professional.*",
+    },
+    "hi": {
+        "title":          "# 🏥 ग्रामीण स्वास्थ्य ट्राइएज सहायक",
+        "subtitle":       "### AI-संचालित ऑफ़लाइन लक्षण जांचकर्ता · हिन्दी + English\n*अपने लक्षण बताएं — तुरंत मार्गदर्शन पाएं।*\n---",
+        "lang_label":     "भाषा / Language",
+        "age_label":      "उम्र",
+        "gender_label":   "लिंग",
+        "gender_choices": ["पुरुष", "महिला"],
+        "symptom_label":  "लक्षण 🩺",
+        "symptom_placeholder": "अपने लक्षण बताएं… जैसे 'बुखार, सिर दर्द, उल्टी'",
+        "voice_label":    "🎤 आवाज़ से बताएं (वैकल्पिक — अपने लक्षण बोलें)",
+        "submit":         "🔍  जांचें",
+        "result_label":   "परिणाम",
+        "audio_label":    "🔊 सलाह सुनें",
+        "examples_label": "📝 ये उदाहरण आज़माएं",
+        "footer":         "---\n*मॉडल: XGBoost (<1 MB) · 100% ऑफ़लाइन · कोई डेटा नहीं रखा जाता · यह चिकित्सा उपकरण नहीं है — हमेशा स्वास्थ्य पेशेवर से परामर्श करें।*",
+    },
+}
 
 # ╔══════════════════════════════════════════════════════════════════════════╗
 # ║  TRIAGE ENGINE                                                        ║
@@ -136,13 +176,11 @@ DISEASE_INFO = {
     },
 }
 
-# ── Static offline clinic database ────────────────────────────────────────
-CLINICS = [
-    {"name": "PHC Rampur",      "name_hi": "प्रा. स्वा. केंद्र रामपुर",    "km": 3,  "phone": "1800-180-1234", "type": "PHC"},
-    {"name": "CHC Dhanpur",     "name_hi": "सा. स्वा. केंद्र धनपुर",      "km": 8,  "phone": "1800-180-5678", "type": "CHC"},
-    {"name": "District Hospital","name_hi": "जिला अस्पताल",              "km": 15, "phone": "108 (Ambulance)","type": "Hospital"},
-    {"name": "Sub-Centre Kheri","name_hi": "उप-केंद्र खेरी",              "km": 1.5,"phone": "9876543210",    "type": "Sub-Centre"},
-]
+# ── Load clinic database from external JSON ───────────────────────────────
+CLINICS_PATH = os.path.join(os.path.dirname(__file__), "clinics.json")
+with open(CLINICS_PATH, encoding="utf-8") as f:
+    CLINICS = json.load(f)
+
 
 # ╔══════════════════════════════════════════════════════════════════════════╗
 # ║  ENGINE CLASS                                                          ║
@@ -159,6 +197,18 @@ class TriageEngine:
         self.symptoms    = meta["symptoms"]
         self.diseases    = meta["diseases"]
         self.urgency_map = meta["urgency"]
+
+        # SHAP explainer (lazy init)
+        self._explainer = None
+
+    def _get_explainer(self):
+        if self._explainer is None:
+            try:
+                import shap
+                self._explainer = shap.TreeExplainer(self.model)
+            except ImportError:
+                self._explainer = False  # Mark as unavailable
+        return self._explainer
 
     # ── extract binary symptom vector from free text ──────────────────────
     def _extract(self, text: str):
@@ -187,6 +237,37 @@ class TriageEngine:
                     triggered.append(rule)
         return triggered
 
+    # ── SHAP explanation ───────────────────────────────────────────────────
+    def _explain(self, vec, predicted_class, lang="en"):
+        explainer = self._get_explainer()
+        if not explainer:
+            return ""
+        try:
+            shap_values = explainer.shap_values(vec)
+            # For multi-class, shap_values is a list of arrays (one per class)
+            if isinstance(shap_values, list):
+                vals = shap_values[predicted_class][0]
+            else:
+                vals = shap_values[0]
+
+            # Get top 3 contributing features
+            top_indices = np.argsort(np.abs(vals))[::-1][:3]
+            top_features = []
+            for i in top_indices:
+                fname = self.features[i]
+                if vals[i] != 0:
+                    top_features.append(fname.replace("_", " "))
+
+            if not top_features:
+                return ""
+
+            if lang == "en":
+                return f"**🧠 Most influential factors:** {', '.join(top_features)}"
+            else:
+                return f"**🧠 सबसे प्रभावशाली कारक:** {', '.join(top_features)}"
+        except Exception:
+            return ""
+
     # ── main prediction ───────────────────────────────────────────────────
     def predict(self, text: str, age: int = 30, gender: int = 0,
                 lang: str = "en"):
@@ -206,7 +287,7 @@ class TriageEngine:
                 advice="Call 108 ambulance or go to nearest hospital NOW."
                        if lang == "en"
                        else "108 एम्बुलेंस बुलाएं या तुरंत नज़दीकी अस्पताल जाएं।",
-                top3=[], is_flag=True,
+                top3=[], is_flag=True, shap_text="",
             )
 
         # — no symptoms detected —
@@ -217,7 +298,7 @@ class TriageEngine:
                 explanation="No symptoms detected. Please describe what you feel."
                             if lang == "en"
                             else "कोई लक्षण नहीं मिला। कृपया बताएं क्या तकलीफ है।",
-                advice="", top3=[], is_flag=False,
+                advice="", top3=[], is_flag=False, shap_text="",
             )
 
         # — model inference —
@@ -242,11 +323,15 @@ class TriageEngine:
                 if lang == "en"
                 else f"लक्षणों के आधार पर: {detected_display}")
 
+        # SHAP explanation
+        shap_text = self._explain(vec, top3_idx[0], lang)
+
         return dict(
             urgency=urgency, detected=detected,
             confidence=float(probs[top3_idx[0]]),
             disease=info[lang], explanation=expl,
             advice=info[f"adv_{lang}"], top3=top3, is_flag=False,
+            shap_text=shap_text,
         )
 
 
@@ -268,7 +353,13 @@ def format_result(r: dict, lang: str) -> str:
     label = label_en if lang == "en" else label_hi
 
     lines = []
-    lines.append(f"## {icon}  {label}")
+
+    # Urgency banner
+    lines.append(f'<div style="background:{color}; color:white; padding:16px 20px; '
+                 f'border-radius:12px; margin-bottom:16px; font-size:1.3em; '
+                 f'font-weight:bold; text-align:center;">')
+    lines.append(f'{icon}  {label}')
+    lines.append('</div>')
     lines.append("")
 
     if r["disease"]:
@@ -279,11 +370,32 @@ def format_result(r: dict, lang: str) -> str:
     lines.append(f"*{r['explanation']}*")
     lines.append("")
 
+    # SHAP explainability
+    if r.get("shap_text"):
+        lines.append(r["shap_text"])
+        lines.append("")
+
     # advice box
     adv_head = "💊 Advice" if lang == "en" else "💊 सलाह"
     lines.append(f"### {adv_head}")
     lines.append(r["advice"])
     lines.append("")
+
+    # 🚨 Ambulance button for RED urgency
+    if r["urgency"] == "RED":
+        if lang == "en":
+            lines.append('<div style="background:#CC0000; color:white; padding:14px; '
+                         'border-radius:10px; text-align:center; font-size:1.2em; '
+                         'font-weight:bold; margin:12px 0;">')
+            lines.append('📞 CALL 108 AMBULANCE — EMERGENCY')
+            lines.append('</div>')
+        else:
+            lines.append('<div style="background:#CC0000; color:white; padding:14px; '
+                         'border-radius:10px; text-align:center; font-size:1.2em; '
+                         'font-weight:bold; margin:12px 0;">')
+            lines.append('📞 108 एम्बुलेंस बुलाएं — आपातकालीन')
+            lines.append('</div>')
+        lines.append("")
 
     # top-3 differential
     if r["top3"]:
@@ -314,18 +426,112 @@ def format_result(r: dict, lang: str) -> str:
 
 
 # ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  TTS ENGINE                                                            ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+
+def generate_tts_audio(text: str, lang: str = "en") -> str | None:
+    """Generate a spoken audio file from text. Returns path or None."""
+    try:
+        import pyttsx3
+        engine = pyttsx3.init()
+
+        # Try to pick a voice that matches the language
+        voices = engine.getProperty("voices")
+        for v in voices:
+            lang_tag = v.languages[0] if v.languages else ""
+            name_lower = v.name.lower()
+            if lang == "hi" and ("hindi" in name_lower or "hi" in str(lang_tag).lower()):
+                engine.setProperty("voice", v.id)
+                break
+            elif lang == "en" and ("english" in name_lower or "en" in str(lang_tag).lower()):
+                engine.setProperty("voice", v.id)
+                break
+
+        engine.setProperty("rate", 150)
+
+        # Strip markdown from text for clean speech
+        clean_text = text.replace("**", "").replace("*", "").replace("#", "").replace("---", "")
+        # Take just the key advice portion (first ~300 chars)
+        if len(clean_text) > 400:
+            clean_text = clean_text[:400]
+
+        tmp_path = os.path.join(tempfile.gettempdir(), "triage_advice.wav")
+        engine.save_to_file(clean_text, tmp_path)
+        engine.runAndWait()
+
+        if os.path.exists(tmp_path):
+            return tmp_path
+    except Exception as e:
+        print(f"TTS error: {e}")
+    return None
+
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  VOICE TRANSCRIPTION                                                   ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+
+def transcribe_voice(audio_path: str) -> str:
+    """Attempt offline transcription using Vosk. Return text or error."""
+    if not audio_path:
+        return ""
+    try:
+        from voice import transcribe_audio_file
+        return transcribe_audio_file(audio_path)
+    except FileNotFoundError as e:
+        return f"[Voice model not found: {e}]"
+    except Exception as e:
+        return f"[Voice error: {e}]"
+
+
+# ╔══════════════════════════════════════════════════════════════════════════╗
 # ║  GRADIO UI                                                             ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
 
 engine = TriageEngine()
 
-def run_triage(symptoms_text, age, gender_choice, language):
-    lang   = "hi" if language == "हिन्दी" else "en"
+def run_triage(symptoms_text, audio, age, gender_choice, language):
+    lang = "hi" if language == "हिन्दी" else "en"
     gender = 1 if gender_choice in ("Male", "पुरुष") else 0
-    age    = int(age) if age else 30
+    age = int(age) if age else 30
 
-    result = engine.predict(symptoms_text, age=age, gender=gender, lang=lang)
-    return format_result(result, lang)
+    # If voice audio provided, transcribe and merge with text
+    combined_text = symptoms_text or ""
+    if audio is not None:
+        # Gradio returns (sample_rate, numpy_array) or a filepath
+        if isinstance(audio, str):
+            audio_path = audio
+        elif isinstance(audio, tuple) and len(audio) == 2:
+            # (sample_rate, data) — save to temp WAV
+            import scipy.io.wavfile as wavfile
+            sr, data = audio
+            audio_path = os.path.join(tempfile.gettempdir(), "voice_input.wav")
+            # Convert to int16 mono if needed
+            if data.ndim > 1:
+                data = data.mean(axis=1)
+            if data.dtype != np.int16:
+                data = (data * 32767).astype(np.int16) if data.max() <= 1 else data.astype(np.int16)
+            wavfile.write(audio_path, sr, data)
+        else:
+            audio_path = None
+
+        if audio_path:
+            transcribed = transcribe_voice(audio_path)
+            if transcribed and not transcribed.startswith("["):
+                if combined_text:
+                    combined_text += " " + transcribed
+                else:
+                    combined_text = transcribed
+
+    result = engine.predict(combined_text, age=age, gender=gender, lang=lang)
+    formatted = format_result(result, lang)
+
+    # Generate TTS audio
+    tts_path = generate_tts_audio(
+        f"{result.get('disease', '')}. {result.get('advice', '')}",
+        lang
+    )
+
+    return formatted, tts_path
 
 
 # ── Build the interface ───────────────────────────────────────────────────
@@ -340,64 +546,159 @@ EXAMPLE_CASES = [
 ]
 
 CSS = """
-.gradio-container { max-width: 700px !important; margin: auto; }
-.output-markdown h2 { padding: 12px; border-radius: 8px; }
+/* ── Global ────────────────────────────────────────────────────── */
+.gradio-container {
+    max-width: 780px !important;
+    margin: auto;
+    font-family: 'Segoe UI', 'Noto Sans Devanagari', sans-serif;
+}
+
+/* ── Header ────────────────────────────────────────────────────── */
+.gradio-container h1 {
+    text-align: center;
+    color: #1a5276;
+    font-size: 2em;
+}
+.gradio-container h3 {
+    text-align: center;
+    color: #555;
+}
+
+/* ── Urgency result banners ──────────────────────────────────── */
+.output-markdown h2 {
+    padding: 12px;
+    border-radius: 8px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.primary {
+    background: linear-gradient(135deg, #1a5276, #2e86c1) !important;
+    border: none !important;
+    font-size: 1.1em !important;
+    padding: 12px 24px !important;
+    border-radius: 10px !important;
+}
+.primary:hover {
+    background: linear-gradient(135deg, #154360, #2471a3) !important;
+}
+
+/* ── Input fields ────────────────────────────────────────────── */
+textarea, input[type="number"] {
+    border-radius: 8px !important;
+    border: 2px solid #d5dbdb !important;
+    font-size: 1em !important;
+}
+textarea:focus, input:focus {
+    border-color: #2e86c1 !important;
+    box-shadow: 0 0 0 3px rgba(46,134,193,0.15) !important;
+}
+
+/* ── Cards / sections ────────────────────────────────────────── */
+.gr-box {
+    border-radius: 12px !important;
+}
+
+/* ── Footer ──────────────────────────────────────────────────── */
+footer { opacity: 0.6; }
 """
 
 with gr.Blocks(css=CSS, title="🏥 Rural Health Triage") as demo:
 
-    gr.Markdown(
-        "# 🏥 Rural Health Triage Assistant\n"
-        "### AI-powered offline symptom checker · English + Hindi\n"
-        "*Tell us your symptoms — get instant guidance.*\n"
-        "---"
-    )
+    # ── Header ────────────────────────────────────────────────
+    title_md    = gr.Markdown(UI_TEXT["en"]["title"])
+    subtitle_md = gr.Markdown(UI_TEXT["en"]["subtitle"])
 
+    # ── Language picker ───────────────────────────────────────
     with gr.Row():
         lang_dd = gr.Dropdown(
             ["English", "हिन्दी"], value="English",
-            label="Language / भाषा", scale=1,
+            label=UI_TEXT["en"]["lang_label"], scale=1,
         )
 
+    # ── Patient info ──────────────────────────────────────────
     with gr.Row():
-        age_box = gr.Number(value=30, label="Age / उम्र", minimum=0,
-                            maximum=120, precision=0, scale=1)
+        age_box = gr.Number(
+            value=30, label=UI_TEXT["en"]["age_label"],
+            minimum=0, maximum=120, precision=0, scale=1,
+        )
         gender_dd = gr.Dropdown(
-            ["Male", "Female"], value="Male",
-            label="Gender / लिंग", scale=1,
+            UI_TEXT["en"]["gender_choices"], value="Male",
+            label=UI_TEXT["en"]["gender_label"], scale=1,
         )
 
+    # ── Symptom text input ────────────────────────────────────
     symptom_box = gr.Textbox(
         lines=3,
-        placeholder="Describe symptoms… e.g. 'fever, headache, chills'\n"
-                    "या हिंदी में बताएं… 'बुखार, सिर दर्द, उल्टी'",
-        label="Symptoms / लक्षण 🩺",
+        placeholder=UI_TEXT["en"]["symptom_placeholder"],
+        label=UI_TEXT["en"]["symptom_label"],
     )
 
-    submit_btn = gr.Button("🔍  Check / जांचें", variant="primary", size="lg")
+    # ── Voice input ───────────────────────────────────────────
+    voice_input = gr.Audio(
+        sources=["microphone"],
+        type="filepath",
+        label=UI_TEXT["en"]["voice_label"],
+    )
 
-    output_md = gr.Markdown(label="Result / परिणाम")
+    # ── Submit ────────────────────────────────────────────────
+    submit_btn = gr.Button(
+        UI_TEXT["en"]["submit"], variant="primary", size="lg",
+    )
 
+    # ── Outputs ───────────────────────────────────────────────
+    output_md = gr.Markdown(label=UI_TEXT["en"]["result_label"])
+    tts_audio = gr.Audio(
+        label=UI_TEXT["en"]["audio_label"],
+        type="filepath",
+        interactive=False,
+        visible=True,
+    )
+
+    # ── Language toggle → update all labels ───────────────────
+    def update_ui_language(language):
+        lang = "hi" if language == "हिन्दी" else "en"
+        t = UI_TEXT[lang]
+        return (
+            gr.update(value=t["title"]),           # title_md
+            gr.update(value=t["subtitle"]),         # subtitle_md
+            gr.update(label=t["age_label"]),         # age_box
+            gr.update(label=t["gender_label"],       # gender_dd
+                      choices=t["gender_choices"],
+                      value=t["gender_choices"][0]),
+            gr.update(label=t["symptom_label"],      # symptom_box
+                      placeholder=t["symptom_placeholder"]),
+            gr.update(label=t["voice_label"]),        # voice_input
+            gr.update(value=t["submit"]),             # submit_btn
+            gr.update(label=t["result_label"]),       # output_md
+            gr.update(label=t["audio_label"]),        # tts_audio
+        )
+
+    lang_dd.change(
+        fn=update_ui_language,
+        inputs=[lang_dd],
+        outputs=[title_md, subtitle_md, age_box, gender_dd,
+                 symptom_box, voice_input, submit_btn, output_md, tts_audio],
+    )
+
+    # ── Submit action ─────────────────────────────────────────
     submit_btn.click(
         fn=run_triage,
-        inputs=[symptom_box, age_box, gender_dd, lang_dd],
-        outputs=output_md,
+        inputs=[symptom_box, voice_input, age_box, gender_dd, lang_dd],
+        outputs=[output_md, tts_audio],
     )
 
+    # ── Example cases ─────────────────────────────────────────
     gr.Examples(
         examples=EXAMPLE_CASES,
         inputs=[symptom_box, age_box, gender_dd, lang_dd],
-        outputs=output_md,
-        fn=run_triage,
+        outputs=[output_md, tts_audio],
+        fn=lambda s, a, g, l: run_triage(s, None, a, g, l),
         cache_examples=False,
-        label="📝 Try these test cases",
+        label=UI_TEXT["en"]["examples_label"],
     )
 
-    gr.Markdown(
-        "---\n"
-        "*Model: XGBoost (<1 MB) · 100% offline · No data stored · "
-        "Not a medical device — always consult a health professional.*"
-    )
+    # ── Footer ────────────────────────────────────────────────
+    gr.Markdown(UI_TEXT["en"]["footer"])
 
 
 if __name__ == "__main__":

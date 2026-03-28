@@ -122,8 +122,10 @@ def main():
     model.fit(X_tr, y_tr)
 
     y_pred = model.predict(X_te)
-    print(f"\nAccuracy: {accuracy_score(y_te, y_pred):.1%}\n")
-    print(classification_report(y_te, y_pred, target_names=DISEASE_NAMES))
+    acc = accuracy_score(y_te, y_pred)
+    print(f"\nAccuracy: {acc:.1%}\n")
+    report_str = classification_report(y_te, y_pred, target_names=DISEASE_NAMES)
+    print(report_str)
 
     os.makedirs("models", exist_ok=True)
     model.save_model("models/triage_model.json")
@@ -137,9 +139,27 @@ def main():
     with open("models/metadata.json", "w") as f:
         json.dump(meta, f, indent=2)
 
+    # ── Save evaluation report ────────────────────────────────────────────
+    from sklearn.metrics import confusion_matrix
+    report_dict = classification_report(
+        y_te, y_pred, target_names=DISEASE_NAMES, output_dict=True
+    )
+    cm = confusion_matrix(y_te, y_pred).tolist()
+    eval_report = {
+        "accuracy": round(acc, 4),
+        "per_class": report_dict,
+        "confusion_matrix": cm,
+        "class_labels": DISEASE_NAMES,
+        "train_size": len(X_tr),
+        "test_size": len(X_te),
+    }
+    with open("models/evaluation_report.json", "w") as f:
+        json.dump(eval_report, f, indent=2)
+
     kb = os.path.getsize("models/triage_model.json") / 1024
     print(f"✅  Model saved  →  models/triage_model.json  ({kb:.0f} KB)")
     print("✅  Metadata     →  models/metadata.json")
+    print("✅  Evaluation   →  models/evaluation_report.json")
     print("\nNext:  python app.py")
 
 if __name__ == "__main__":
