@@ -26,7 +26,7 @@ Desktop.ini
 .DS_Store
 
 # Vosk model (large, ~50 MB — download separately)
-vosk-model-hi-0.22/
+vosk-model-*/
 
 # Large model binary (retrain locally via train_model.py)
 models/triage_model.json

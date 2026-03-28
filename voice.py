@@ -5,27 +5,26 @@ Provides both live-mic and file-based transcription.
 
 import json, os, wave
 
-VOSK_MODEL_PATH = os.path.join(
-    os.path.dirname(__file__), "vosk-model-hi-0.22", "vosk-model-hi-0.22"
-)
+MODEL_PATHS = {
+    "hi": os.path.join(os.path.dirname(__file__), "vosk-model-hi-0.22", "vosk-model-hi-0.22"),
+    "en": os.path.join(os.path.dirname(__file__), "vosk-model-small-en-us-0.15")
+}
 
-_model = None
+_models = {}
 
-def _get_model():
-    """Lazy-load the Vosk model (heavy, ~50 MB)."""
-    global _model
-    if _model is None:
+def _get_model(lang="en"):
+    """Lazy-load the Vosk model (heavy). Cache by lang."""
+    if lang not in _models:
         from vosk import Model
-        if not os.path.isdir(VOSK_MODEL_PATH):
+        path = MODEL_PATHS.get(lang)
+        if not path or not os.path.isdir(path):
             raise FileNotFoundError(
-                f"Vosk Hindi model not found at {VOSK_MODEL_PATH}. "
-                "Download from https://alphacephei.com/vosk/models"
+                f"Vosk {lang} model not found at {path}."
             )
-        _model = Model(VOSK_MODEL_PATH)
-    return _model
+        _models[lang] = Model(path)
+    return _models[lang]
 
-
-def transcribe_audio_file(filepath: str) -> str:
+def transcribe_audio_file(filepath: str, lang: str = "en") -> str:
     """
     Transcribe a WAV audio file to text using Vosk offline ASR.
     Accepts the file path that Gradio's gr.Audio returns.
@@ -33,7 +32,7 @@ def transcribe_audio_file(filepath: str) -> str:
     """
     from vosk import KaldiRecognizer
 
-    model = _get_model()
+    model = _get_model(lang)
 
     wf = wave.open(filepath, "rb")
     if wf.getnchannels() != 1 or wf.getsampwidth() != 2:
@@ -61,7 +60,7 @@ def transcribe_audio_file(filepath: str) -> str:
     return " ".join(text_parts).strip()
 
 
-def listen_mic(duration: int = 5, samplerate: int = 16000) -> str:
+def listen_mic(duration: int = 5, samplerate: int = 16000, lang: str = "en") -> str:
     """
     Record from microphone for `duration` seconds and transcribe.
     Requires sounddevice.
@@ -70,7 +69,7 @@ def listen_mic(duration: int = 5, samplerate: int = 16000) -> str:
     import sounddevice as sd
     from vosk import KaldiRecognizer
 
-    model = _get_model()
+    model = _get_model(lang)
     q = queue.Queue()
 
     def callback(indata, frames, time_info, status):

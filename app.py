@@ -494,13 +494,13 @@ def speak_advice(text: str, lang: str = "en"):
 # ║  VOICE TRANSCRIPTION                                                   ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
 
-def transcribe_voice(audio_path: str) -> str:
+def transcribe_voice(audio_path: str, lang: str = "en") -> str:
     """Attempt offline transcription using Vosk. Return text or error."""
     if not audio_path:
         return ""
     try:
         from voice import transcribe_audio_file
-        return transcribe_audio_file(audio_path)
+        return transcribe_audio_file(audio_path, lang=lang)
     except FileNotFoundError as e:
         return f"[Voice model not found: {e}]"
     except Exception as e:
@@ -513,54 +513,41 @@ def transcribe_voice(audio_path: str) -> str:
 
 engine = TriageEngine()
 
-def run_triage(symptoms_text, audio, age, gender_choice, language):
+def process_audio_input(audio_path, current_text, language):
+    """Triggered when recording stops. Transcribes and appends to textbox."""
+    if not audio_path:
+        return current_text
+        
+    lang = "hi" if language == "हिन्दी" else "en"
+    
+    import shutil
+    stable_path = os.path.join(tempfile.gettempdir(), "triage_voice_input.wav")
+    try:
+        shutil.copy2(audio_path, stable_path)
+        transcribed = transcribe_voice(stable_path, lang)
+        
+        if transcribed and not transcribed.startswith("["):
+            # Append if there's already text, otherwise replace
+            if current_text and current_text.strip():
+                return f"{current_text} {transcribed}"
+            return transcribed
+        return current_text  # If failed, return what they had
+    except Exception as e:
+        print(f"[VOICE] Error in auto-transcribe: {e}")
+        return current_text
+
+def run_triage(symptoms_text, age, gender_choice, language):
     lang = "hi" if language == "हिन्दी" else "en"
     gender = 1 if gender_choice in ("Male", "पुरुष") else 0
     age = int(age) if age else 30
 
     print(f"\n{'='*50}")
-    print(f"[TRIAGE] text='{symptoms_text}', audio={audio}, age={age}, lang={lang}")
+    print(f"[TRIAGE] text='{symptoms_text}', age={age}, lang={lang}")
 
-    # If voice audio provided, try to transcribe and merge with text
-    combined_text = symptoms_text or ""
-    voice_status = ""
-    if audio is not None:
-        print(f"[VOICE] Audio received: type={type(audio)}, value={audio}")
-        try:
-            if isinstance(audio, str) and os.path.isfile(audio):
-                # Copy to stable temp file so Gradio doesn't clean it up mid-serve
-                import shutil
-                stable_path = os.path.join(tempfile.gettempdir(), "triage_voice_input.wav")
-                shutil.copy2(audio, stable_path)
-                print(f"[VOICE] Copied audio to {stable_path}")
-
-                transcribed = transcribe_voice(stable_path)
-                print(f"[VOICE] Transcription result: '{transcribed}'")
-
-                if transcribed and not transcribed.startswith("["):
-                    if combined_text:
-                        combined_text += " " + transcribed
-                    else:
-                        combined_text = transcribed
-                    voice_status = f"🎤 Voice heard: \"{transcribed}\"\n\n"
-                elif transcribed and transcribed.startswith("["):
-                    voice_status = ("🎤 *Voice model not loaded — please type your "
-                                    "symptoms in the text box above.*\n\n"
-                                    if lang == "en" else
-                                    "🎤 *आवाज़ मॉडल लोड नहीं हुआ — कृपया ऊपर टेक्स्ट बॉक्स में लक्षण टाइप करें।*\n\n")
-            else:
-                print(f"[VOICE] Audio is not a valid filepath: {audio}")
-        except Exception as e:
-            print(f"[VOICE] Error: {e}")
-            traceback.print_exc()
-            voice_status = ("🎤 *Could not process voice — please type your symptoms.*\n\n"
-                            if lang == "en" else
-                            "🎤 *आवाज़ प्रोसेस नहीं हो सकी — कृपया लक्षण टाइप करें।*\n\n")
-
-    print(f"[TRIAGE] combined_text='{combined_text}'")
-    result = engine.predict(combined_text, age=age, gender=gender, lang=lang)
+    # Voice is now pre-processed into symptoms_text
+    result = engine.predict(symptoms_text, age=age, gender=gender, lang=lang)
     print(f"[TRIAGE] urgency={result['urgency']}, disease={result['disease']}, detected={result['detected']}")
-    formatted = voice_status + format_result(result, lang)
+    formatted = format_result(result, lang)
 
     # Speak advice aloud in background (non-blocking)
     if result.get("advice"):
@@ -830,9 +817,16 @@ with gr.Blocks(css=CSS, title="🏥 Rural Health Triage") as demo:
     )
 
     # ── Submit action ─────────────────────────────────────────
+    # Transcript populated dynamically when user stops recording
+    voice_input.stop_recording(
+        fn=process_audio_input,
+        inputs=[voice_input, symptom_box, lang_dd],
+        outputs=[symptom_box]
+    )
+
     submit_btn.click(
         fn=run_triage,
-        inputs=[symptom_box, voice_input, age_box, gender_dd, lang_dd],
+        inputs=[symptom_box, age_box, gender_dd, lang_dd],
         outputs=[output_md],
     )
 
@@ -841,7 +835,7 @@ with gr.Blocks(css=CSS, title="🏥 Rural Health Triage") as demo:
         examples=EXAMPLE_CASES,
         inputs=[symptom_box, age_box, gender_dd, lang_dd],
         outputs=[output_md],
-        fn=lambda s, a, g, l: run_triage(s, None, a, g, l),
+        fn=lambda s, a, g, l: run_triage(s, a, g, l),
         cache_examples=False,
         label=UI_TEXT["en"]["examples_label"],
     )
