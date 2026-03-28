@@ -174,6 +174,31 @@ DISEASE_INFO = {
         "adv_en": "Likely flu. Rest, drink fluids, take paracetamol for fever. See doctor if symptoms worsen after 3 days.",
         "adv_hi": "फ्लू हो सकता है। आराम करें, तरल पदार्थ पिएं। 3 दिन बाद भी ठीक न हो तो डॉक्टर को दिखाएं।",
     },
+    "cholera": {
+        "en": "Cholera",  "hi": "हैजा",
+        "adv_en": "Possible cholera — severe dehydration risk. Drink ORS immediately. Go to hospital NOW for IV fluids.",
+        "adv_hi": "संभावित हैजा — गंभीर निर्जलीकरण का खतरा। तुरंत ORS पिएं। IV तरल पदार्थ के लिए अभी अस्पताल जाएं।",
+    },
+    "jaundice": {
+        "en": "Jaundice / Hepatitis",  "hi": "पीलिया",
+        "adv_en": "Signs of jaundice/hepatitis. Avoid oily food, drink boiled water. See doctor for liver function test.",
+        "adv_hi": "पीलिया के लक्षण। तला हुआ खाना बंद करें, उबला पानी पिएं। लिवर जांच के लिए डॉक्टर को दिखाएं।",
+    },
+    "urinary_tract_infection": {
+        "en": "Urinary Tract Infection (UTI)",  "hi": "मूत्र मार्ग संक्रमण",
+        "adv_en": "Possible UTI. Drink plenty of water. See doctor for urine test — antibiotics may be needed.",
+        "adv_hi": "संभावित मूत्र संक्रमण। खूब पानी पिएं। पेशाब जांच के लिए डॉक्टर को दिखाएं।",
+    },
+    "asthma_attack": {
+        "en": "Asthma Attack",  "hi": "दमा का दौरा",
+        "adv_en": "Signs of asthma attack. Sit upright, use inhaler if available. Seek medical help if breathing doesn't improve.",
+        "adv_hi": "दमा के दौरे के लक्षण। सीधे बैठें, इन्हेलर उपलब्ध हो तो उपयोग करें। सांस न सुधरे तो चिकित्सा सहायता लें।",
+    },
+    "chickenpox": {
+        "en": "Chickenpox",  "hi": "चिकनपॉक्स (छोटी माता)",
+        "adv_en": "Likely chickenpox. Keep rash clean, avoid scratching. Take paracetamol for fever. Stay isolated to prevent spread.",
+        "adv_hi": "चिकनपॉक्स लगती है। दानों को साफ रखें, खुजाएं नहीं। बुखार हो तो पैरासिटामॉल लें। फैलने से रोकने के लिए अलग रहें।",
+    },
 }
 
 # ── Load clinic database from external JSON ───────────────────────────────
@@ -211,12 +236,21 @@ class TriageEngine:
         return self._explainer
 
     # ── extract binary symptom vector from free text ──────────────────────
+    @staticmethod
+    def _keyword_match(keyword: str, text: str) -> bool:
+        """Flexible keyword matching: for multi-word keywords, check if ALL
+        words appear anywhere in the text (handles natural speech where
+        extra words appear between symptom words, e.g. 'सिर में बहुत दर्द')."""
+        if " " in keyword:
+            return all(word in text for word in keyword.split())
+        return keyword in text
+
     def _extract(self, text: str):
         low = text.lower()
         hit = {}
         found = []
         for symptom, keywords in KEYWORD_MAP.items():
-            match = any(kw in low for kw in keywords)
+            match = any(self._keyword_match(kw, low) for kw in keywords)
             hit[symptom] = int(match)
             if match:
                 found.append(symptom)
@@ -426,44 +460,34 @@ def format_result(r: dict, lang: str) -> str:
 
 
 # ╔══════════════════════════════════════════════════════════════════════════╗
-# ║  TTS ENGINE                                                            ║
+# ║  TTS ENGINE  (plays directly via speakers — no file returned)          ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
 
-def generate_tts_audio(text: str, lang: str = "en") -> str | None:
-    """Generate a spoken audio file from text. Returns path or None."""
-    try:
-        import pyttsx3
-        engine = pyttsx3.init()
-
-        # Try to pick a voice that matches the language
-        voices = engine.getProperty("voices")
-        for v in voices:
-            lang_tag = v.languages[0] if v.languages else ""
-            name_lower = v.name.lower()
-            if lang == "hi" and ("hindi" in name_lower or "hi" in str(lang_tag).lower()):
-                engine.setProperty("voice", v.id)
-                break
-            elif lang == "en" and ("english" in name_lower or "en" in str(lang_tag).lower()):
-                engine.setProperty("voice", v.id)
-                break
-
-        engine.setProperty("rate", 150)
-
-        # Strip markdown from text for clean speech
-        clean_text = text.replace("**", "").replace("*", "").replace("#", "").replace("---", "")
-        # Take just the key advice portion (first ~300 chars)
-        if len(clean_text) > 400:
-            clean_text = clean_text[:400]
-
-        tmp_path = os.path.join(tempfile.gettempdir(), "triage_advice.wav")
-        engine.save_to_file(clean_text, tmp_path)
-        engine.runAndWait()
-
-        if os.path.exists(tmp_path):
-            return tmp_path
-    except Exception as e:
-        print(f"TTS error: {e}")
-    return None
+def speak_advice(text: str, lang: str = "en"):
+    """Speak the advice text aloud using pyttsx3 (runs in background thread)."""
+    import threading
+    def _speak():
+        try:
+            import pyttsx3
+            tts = pyttsx3.init()
+            voices = tts.getProperty("voices")
+            for v in voices:
+                name_lower = v.name.lower()
+                if lang == "hi" and "hindi" in name_lower:
+                    tts.setProperty("voice", v.id)
+                    break
+                elif lang == "en" and "english" in name_lower:
+                    tts.setProperty("voice", v.id)
+                    break
+            tts.setProperty("rate", 150)
+            clean = text.replace("**", "").replace("*", "").replace("#", "").replace("---", "")
+            if len(clean) > 400:
+                clean = clean[:400]
+            tts.say(clean)
+            tts.runAndWait()
+        except Exception as e:
+            print(f"[TTS] Error: {e}")
+    threading.Thread(target=_speak, daemon=True).start()
 
 
 # ╔══════════════════════════════════════════════════════════════════════════╗
@@ -494,44 +518,58 @@ def run_triage(symptoms_text, audio, age, gender_choice, language):
     gender = 1 if gender_choice in ("Male", "पुरुष") else 0
     age = int(age) if age else 30
 
-    # If voice audio provided, transcribe and merge with text
+    print(f"\n{'='*50}")
+    print(f"[TRIAGE] text='{symptoms_text}', audio={audio}, age={age}, lang={lang}")
+
+    # If voice audio provided, try to transcribe and merge with text
     combined_text = symptoms_text or ""
+    voice_status = ""
     if audio is not None:
-        # Gradio returns (sample_rate, numpy_array) or a filepath
-        if isinstance(audio, str):
-            audio_path = audio
-        elif isinstance(audio, tuple) and len(audio) == 2:
-            # (sample_rate, data) — save to temp WAV
-            import scipy.io.wavfile as wavfile
-            sr, data = audio
-            audio_path = os.path.join(tempfile.gettempdir(), "voice_input.wav")
-            # Convert to int16 mono if needed
-            if data.ndim > 1:
-                data = data.mean(axis=1)
-            if data.dtype != np.int16:
-                data = (data * 32767).astype(np.int16) if data.max() <= 1 else data.astype(np.int16)
-            wavfile.write(audio_path, sr, data)
-        else:
-            audio_path = None
+        print(f"[VOICE] Audio received: type={type(audio)}, value={audio}")
+        try:
+            if isinstance(audio, str) and os.path.isfile(audio):
+                # Copy to stable temp file so Gradio doesn't clean it up mid-serve
+                import shutil
+                stable_path = os.path.join(tempfile.gettempdir(), "triage_voice_input.wav")
+                shutil.copy2(audio, stable_path)
+                print(f"[VOICE] Copied audio to {stable_path}")
 
-        if audio_path:
-            transcribed = transcribe_voice(audio_path)
-            if transcribed and not transcribed.startswith("["):
-                if combined_text:
-                    combined_text += " " + transcribed
-                else:
-                    combined_text = transcribed
+                transcribed = transcribe_voice(stable_path)
+                print(f"[VOICE] Transcription result: '{transcribed}'")
 
+                if transcribed and not transcribed.startswith("["):
+                    if combined_text:
+                        combined_text += " " + transcribed
+                    else:
+                        combined_text = transcribed
+                    voice_status = f"🎤 Voice heard: \"{transcribed}\"\n\n"
+                elif transcribed and transcribed.startswith("["):
+                    voice_status = ("🎤 *Voice model not loaded — please type your "
+                                    "symptoms in the text box above.*\n\n"
+                                    if lang == "en" else
+                                    "🎤 *आवाज़ मॉडल लोड नहीं हुआ — कृपया ऊपर टेक्स्ट बॉक्स में लक्षण टाइप करें।*\n\n")
+            else:
+                print(f"[VOICE] Audio is not a valid filepath: {audio}")
+        except Exception as e:
+            print(f"[VOICE] Error: {e}")
+            traceback.print_exc()
+            voice_status = ("🎤 *Could not process voice — please type your symptoms.*\n\n"
+                            if lang == "en" else
+                            "🎤 *आवाज़ प्रोसेस नहीं हो सकी — कृपया लक्षण टाइप करें।*\n\n")
+
+    print(f"[TRIAGE] combined_text='{combined_text}'")
     result = engine.predict(combined_text, age=age, gender=gender, lang=lang)
-    formatted = format_result(result, lang)
+    print(f"[TRIAGE] urgency={result['urgency']}, disease={result['disease']}, detected={result['detected']}")
+    formatted = voice_status + format_result(result, lang)
 
-    # Generate TTS audio
-    tts_path = generate_tts_audio(
-        f"{result.get('disease', '')}. {result.get('advice', '')}",
-        lang
-    )
+    # Speak advice aloud in background (non-blocking)
+    if result.get("advice"):
+        speak_advice(
+            f"{result.get('disease', '')}. {result.get('advice', '')}",
+            lang
+        )
 
-    return formatted, tts_path
+    return formatted
 
 
 # ── Build the interface ───────────────────────────────────────────────────
@@ -647,12 +685,6 @@ with gr.Blocks(css=CSS, title="🏥 Rural Health Triage") as demo:
 
     # ── Outputs ───────────────────────────────────────────────
     output_md = gr.Markdown(label=UI_TEXT["en"]["result_label"])
-    tts_audio = gr.Audio(
-        label=UI_TEXT["en"]["audio_label"],
-        type="filepath",
-        interactive=False,
-        visible=True,
-    )
 
     # ── Language toggle → update all labels ───────────────────
     def update_ui_language(language):
@@ -670,28 +702,27 @@ with gr.Blocks(css=CSS, title="🏥 Rural Health Triage") as demo:
             gr.update(label=t["voice_label"]),        # voice_input
             gr.update(value=t["submit"]),             # submit_btn
             gr.update(label=t["result_label"]),       # output_md
-            gr.update(label=t["audio_label"]),        # tts_audio
         )
 
     lang_dd.change(
         fn=update_ui_language,
         inputs=[lang_dd],
         outputs=[title_md, subtitle_md, age_box, gender_dd,
-                 symptom_box, voice_input, submit_btn, output_md, tts_audio],
+                 symptom_box, voice_input, submit_btn, output_md],
     )
 
     # ── Submit action ─────────────────────────────────────────
     submit_btn.click(
         fn=run_triage,
         inputs=[symptom_box, voice_input, age_box, gender_dd, lang_dd],
-        outputs=[output_md, tts_audio],
+        outputs=[output_md],
     )
 
     # ── Example cases ─────────────────────────────────────────
     gr.Examples(
         examples=EXAMPLE_CASES,
         inputs=[symptom_box, age_box, gender_dd, lang_dd],
-        outputs=[output_md, tts_audio],
+        outputs=[output_md],
         fn=lambda s, a, g, l: run_triage(s, None, a, g, l),
         cache_examples=False,
         label=UI_TEXT["en"]["examples_label"],
