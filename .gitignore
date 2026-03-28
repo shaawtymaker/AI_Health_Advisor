@@ -30,6 +30,8 @@ vosk-model-hi-0.22/
 
 # Large model binary (retrain locally via train_model.py)
 models/triage_model.json
+models/triage_model.onnx
+models/training_data.csv
 
 # TTS temp files
 *.wav

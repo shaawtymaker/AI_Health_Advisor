@@ -1,0 +1,28 @@
+﻿============================================================
+  Kaggle Dataset Integration
+============================================================
+   Training.csv: 2040 rows mapped, 24 diseases skipped
+   Skipped: ['(vertigo) Paroymsal  Positional Vertigo', 'AIDS', 'Acne', 'Alcoholic hepatitis', 'Arthritis', 'Cervical spondylosis', 'Chronic cholestasis', 'Diabetes', 'Dimorphic hemmorhoids(piles)', 'Drug Reaction', 'Fungal infection', 'GERD', 'Heart attack', 'Hypertension', 'Hyperthyroidism', 'Hypoglycemia', 'Hypothyroidism', 'Impetigo', 'Migraine', 'Osteoarthristis', 'Paralysis (brain hemorrhage)', 'Peptic ulcer diseae', 'Psoriasis', 'Varicose veins']
+   Training.csv: 17 rows mapped, 24 diseases skipped
+   Skipped: ['(vertigo) Paroymsal  Positional Vertigo', 'AIDS', 'Acne', 'Alcoholic hepatitis', 'Arthritis', 'Cervical spondylosis', 'Chronic cholestasis', 'Diabetes', 'Dimorphic hemmorhoids(piles)', 'Drug Reaction', 'Fungal infection', 'GERD', 'Heart attack', 'Hypertension', 'Hyperthyroidism', 'Hypoglycemia', 'Hypothyroidism', 'Impetigo', 'Migraine', 'Osteoarthristis', 'Paralysis (brain hemorrhage)', 'Peptic ulcer diseae', 'Psoriasis', 'Varicose veins']
+   Patient Profile: 86 rows mapped
+
+   Combined: 2143 total rows
+   Disease distribution:
+     anemia                             1 rows
+     asthma_attack                    144 rows
+     chickenpox                       123 rows
+     cholera                            2 rows
+     common_cold                      248 rows
+     dengue                           123 rows
+     flu                               16 rows
+     gastroenteritis                  127 rows
+     jaundice                         731 rows
+     malaria                          123 rows
+     pneumonia                        129 rows
+     tuberculosis                     124 rows
+     typhoid                          123 rows
+     urinary_tract_infection          129 rows
+
+   Saved: C:\Users\akank\Downloads\AI_Health_adviser\data\kaggle_mapped.csv (178 KB)
+   Ready for train_model.py!

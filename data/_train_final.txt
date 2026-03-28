@@ -1,0 +1,64 @@
+﻿============================================================
+  Rural Health Triage ÔÇö Enhanced Model Training (v3)
+  Sources: WHO/CDC profiles + Kaggle datasets + DHS weights
+============================================================
+   ­ƒôÜ Loaded knowledge base: 17 vignettes, 17 prevalence weights
+   ­ƒôï Injected 300 clinical vignette samples
+
+­ƒôè Synthetic data: 14,940 samples
+­ƒôè Kaggle real data: 2,143 rows from 14 diseases
+­ƒôè Combined: 17,083 total samples (synthetic + real)
+   15 diseases  |  36 features
+   Train: 13,666  |  Test: 3,417
+   SMOTE: 13,666 ÔåÆ 22,410 (balanced)
+
+­ƒöä 5-fold cross-validation...
+   CV Accuracy: 93.0% ┬▒ 0.4%
+   Fold scores: ['93.2%', '92.2%', '93.5%', '93.0%', '93.1%']
+
+­ƒÅï´©Å Training final model...
+
+Ô£à Test Accuracy: 91.4%
+
+                         precision    recall  f1-score   support
+
+                malaria       0.93      0.96      0.95       221
+                 dengue       1.00      0.97      0.99       237
+              pneumonia       0.91      0.92      0.91       238
+            heat_stroke       0.97      0.97      0.97       132
+                cholera       0.81      0.91      0.86       100
+                typhoid       0.86      0.91      0.88       253
+           tuberculosis       0.98      0.99      0.98       205
+        gastroenteritis       0.90      0.89      0.90       269
+                 anemia       0.95      0.94      0.95       292
+               jaundice       0.89      0.92      0.90       310
+urinary_tract_infection       0.78      0.72      0.75       222
+          asthma_attack       0.90      0.87      0.89       177
+            common_cold       0.98      0.94      0.96       374
+                    flu       0.87      0.87      0.87       247
+             chickenpox       0.91      0.91      0.91       140
+
+               accuracy                           0.91      3417
+              macro avg       0.91      0.91      0.91      3417
+           weighted avg       0.91      0.91      0.91      3417
+
+Ô£à  ONNX model   ÔåÆ  models/triage_model.onnx  (3243 KB)
+
+­ƒÜ¿ Emergency Sensitivity Check (target: ÔëÑ80%):
+   Ô£à  malaria                    recall = 95.9%
+   Ô£à  dengue                     recall = 97.5%
+   Ô£à  pneumonia                  recall = 92.0%
+   Ô£à  heat_stroke                recall = 97.0%
+   Ô£à  cholera                    recall = 91.0%
+   Ô£à All RED diseases meet ÔëÑ80% sensitivity target!
+
+============================================================
+Ô£à  Model         ÔåÆ  models/triage_model.json  (6697 KB)
+Ô£à  Metadata      ÔåÆ  models/metadata.json
+Ô£à  Evaluation    ÔåÆ  models/evaluation_report.json
+Ô£à  Training data ÔåÆ  models/training_data.csv
+
+   15 diseases  |  36 features  |  17,083 samples
+   Test accuracy: 91.4%  |  CV accuracy: 93.0%
+
+Next:  python app.py

@@ -9,3 +9,4 @@ vosk>=0.3.45
 sounddevice>=0.4.6
 fastapi>=0.100.0
 uvicorn>=0.23.0
+imbalanced-learn>=0.11.0

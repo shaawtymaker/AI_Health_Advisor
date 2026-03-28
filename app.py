@@ -584,60 +584,178 @@ EXAMPLE_CASES = [
 ]
 
 CSS = """
-/* ── Global ────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+/* ── Animated Background ────────────────────────────────────────── */
+body, .gradio-container {
+    background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #0b3b42);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    font-family: 'Outfit', 'Noto Sans Devanagari', sans-serif !important;
+    color: #edf2f4 !important;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ── Container & Glassmorphism ─────────────────────────────────── */
 .gradio-container {
-    max-width: 780px !important;
-    margin: auto;
-    font-family: 'Segoe UI', 'Noto Sans Devanagari', sans-serif;
+    max-width: 850px !important;
+    margin: 40px auto !important;
+    padding: 30px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
 /* ── Header ────────────────────────────────────────────────────── */
 .gradio-container h1 {
     text-align: center;
-    color: #1a5276;
-    font-size: 2em;
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 2.4em;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    margin-bottom: 5px;
 }
 .gradio-container h3 {
     text-align: center;
-    color: #555;
+    color: #cfd8dc !important;
+    font-weight: 300;
+    margin-top: 0;
 }
 
-/* ── Urgency result banners ──────────────────────────────────── */
-.output-markdown h2 {
-    padding: 12px;
-    border-radius: 8px;
+/* ── Cards / Sections (The internal Gradio blocks) ─────────────── */
+div.gr-box, div.gr-panel, div.gr-form, .gradio-html {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* ── Buttons ─────────────────────────────────────────────────── */
-.primary {
-    background: linear-gradient(135deg, #1a5276, #2e86c1) !important;
-    border: none !important;
-    font-size: 1.1em !important;
-    padding: 12px 24px !important;
-    border-radius: 10px !important;
-}
-.primary:hover {
-    background: linear-gradient(135deg, #154360, #2471a3) !important;
+/* Labels */
+span.svelte-1gfkn6j {
+    color: #e0e0e0 !important;
+    font-weight: 500 !important;
 }
 
 /* ── Input fields ────────────────────────────────────────────── */
-textarea, input[type="number"] {
-    border-radius: 8px !important;
-    border: 2px solid #d5dbdb !important;
-    font-size: 1em !important;
+textarea, input[type="number"], select, .gr-input {
+    background: rgba(0, 0, 0, 0.2) !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    font-size: 1.05em !important;
+    transition: all 0.3s ease !important;
 }
-textarea:focus, input:focus {
-    border-color: #2e86c1 !important;
-    box-shadow: 0 0 0 3px rgba(46,134,193,0.15) !important;
+textarea:focus, input:focus, select:focus, .gr-input:focus {
+    border-color: #48cae4 !important;
+    box-shadow: 0 0 0 3px rgba(72, 202, 228, 0.3) !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    outline: none !important;
 }
 
-/* ── Cards / sections ────────────────────────────────────────── */
-.gr-box {
+/* Placeholder color */
+::placeholder {
+    color: rgba(255,255,255,0.4) !important;
+}
+
+/* Dropdown list items inside select */
+.gr-dropdown-list {
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+.gr-dropdown-list li {
+    color: white !important;
+}
+.gr-dropdown-list li:hover {
+    background: #334155 !important;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+button.primary {
+    background: linear-gradient(135deg, #00b4d8, #0077b6) !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
+    font-size: 1.2em !important;
+    padding: 14px 28px !important;
     border-radius: 12px !important;
+    box-shadow: 0 4px 15px rgba(0, 119, 182, 0.4) !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+button.primary:hover {
+    background: linear-gradient(135deg, #48cae4, #0096c7) !important;
+    box-shadow: 0 6px 20px rgba(0, 119, 182, 0.6) !important;
+    transform: translateY(-2px);
+}
+button.primary:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 10px rgba(0, 119, 182, 0.4) !important;
+}
+
+/* Audio component styling */
+.audio-recorder {
+    border-color: rgba(255,255,255,0.2) !important;
+    background: rgba(0,0,0,0.1) !important;
+}
+button[aria-label="Record audio"] {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border: 1px solid rgba(239, 68, 68, 0.5) !important;
+}
+button[aria-label="Record audio"]:hover {
+    background: rgba(239, 68, 68, 0.4) !important;
+}
+
+/* ── Markdown Result Output ──────────────────────────────────── */
+.output-markdown {
+    color: #edf2f4 !important;
+    font-size: 1.1em;
+}
+.output-markdown h2 {
+    padding: 16px;
+    border-radius: 10px;
+    margin-top: 10px;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+.output-markdown h3 {
+    color: #90e0ef !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 5px;
+}
+.output-markdown p {
+    line-height: 1.6;
+}
+
+/* Examples rendering */
+.gr-samples-gallery button {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: #e0e0e0 !important;
+    transition: all 0.2s;
+}
+.gr-samples-gallery button:hover {
+    background: rgba(72,202,228,0.2) !important;
+    border-color: rgba(72,202,228,0.5) !important;
 }
 
 /* ── Footer ──────────────────────────────────────────────────── */
-footer { opacity: 0.6; }
+footer { 
+    opacity: 0.5;
+    text-align: center;
+    border-top: 1px solid rgba(255,255,255,0.1) !important;
+    padding-top: 15px;
+}
+/* Hide default Gradio footer logo */
+footer .svelte-15x3029 {
+    display: none !important;
+}
 """
 
 with gr.Blocks(css=CSS, title="🏥 Rural Health Triage") as demo:

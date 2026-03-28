@@ -1,0 +1,76 @@
+﻿============================================================
+  Rural Health Triage ÔÇö Enhanced Model Training (v3)
+  Sources: WHO/CDC profiles + Kaggle datasets + DHS weights
+============================================================
+   ­ƒôÜ Loaded knowledge base: 17 vignettes, 17 prevalence weights
+   ­ƒôï Injected 300 clinical vignette samples
+
+­ƒôè Synthetic data: 14,940 samples
+­ƒôè Kaggle real data: 2,143 rows from 14 diseases
+­ƒôè Combined: 17,083 total samples (synthetic + real)
+   15 diseases  |  36 features
+   Train: 13,666  |  Test: 3,417
+   SMOTE: 13,666 ÔåÆ 22,410 (balanced)
+
+­ƒöä 5-fold cross-validation...
+   CV Accuracy: 93.5% ┬▒ 0.5%
+   Fold scores: ['93.4%', '92.9%', '94.3%', '93.6%', '93.2%']
+
+­ƒÅï´©Å Training final model...
+
+Ô£à Test Accuracy: 91.8%
+
+                         precision    recall  f1-score   support
+
+                malaria       0.95      0.95      0.95       221
+                 dengue       0.97      0.99      0.98       237
+              pneumonia       0.91      0.94      0.92       238
+            heat_stroke       0.98      0.98      0.98       132
+                cholera       0.76      0.90      0.83       100
+                typhoid       0.92      0.87      0.89       253
+           tuberculosis       0.99      0.97      0.98       205
+        gastroenteritis       0.90      0.86      0.88       269
+                 anemia       0.94      0.95      0.95       292
+               jaundice       0.92      0.91      0.91       310
+urinary_tract_infection       0.79      0.82      0.80       222
+          asthma_attack       0.88      0.90      0.89       177
+            common_cold       0.98      0.95      0.96       374
+                    flu       0.90      0.89      0.90       247
+             chickenpox       0.88      0.91      0.90       140
+
+               accuracy                           0.92      3417
+              macro avg       0.91      0.92      0.91      3417
+           weighted avg       0.92      0.92      0.92      3417
+
+   ÔÜá´©Å  ONNX export failed: Unable to find a shape calculator for type '<class 'xgboost.sklearn.XGBClassifier'>'.
+It usually means the pipeline being converted contains a
+transformer or a predictor with no corresponding converter
+implemented in sklearn-onnx. If the converted is implemented
+in another library, you need to register
+the converted so that it can be used by sklearn-onnx (function
+update_registered_converter). If the model is not yet covered
+by sklearn-onnx, you may raise an issue to
+https://github.com/onnx/sklearn-onnx/issues
+to get the converter implemented or even contribute to the
+project. If the model is a custom model, a new converter must
+be implemented. Examples can be found in the gallery.
+
+
+­ƒÜ¿ Emergency Sensitivity Check (target: ÔëÑ80%):
+   Ô£à  malaria                    recall = 95.5%
+   Ô£à  dengue                     recall = 98.7%
+   Ô£à  pneumonia                  recall = 93.7%
+   Ô£à  heat_stroke                recall = 97.7%
+   Ô£à  cholera                    recall = 90.0%
+   Ô£à All RED diseases meet ÔëÑ80% sensitivity target!
+
+============================================================
+Ô£à  Model         ÔåÆ  models/triage_model.json  (6655 KB)
+Ô£à  Metadata      ÔåÆ  models/metadata.json
+Ô£à  Evaluation    ÔåÆ  models/evaluation_report.json
+Ô£à  Training data ÔåÆ  models/training_data.csv
+
+   15 diseases  |  36 features  |  17,083 samples
+   Test accuracy: 91.8%  |  CV accuracy: 93.5%
+
+Next:  python app.py

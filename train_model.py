@@ -95,9 +95,10 @@ DISEASES = {
         "source": "WHO Cholera Fact-sheet",
         "age_range": (1, 70),
         "p": {
-            "diarrhea":.95, "vomiting":.85, "dehydration_signs":.90,
-            "weakness":.80, "abdominal_pain":.50, "nausea":.60,
-            "muscle_pain":.30, "fever":.20, "confusion":.15,
+            "diarrhea":.98, "vomiting":.90, "dehydration_signs":.95,
+            "weakness":.85, "abdominal_pain":.40, "nausea":.55,
+            "muscle_pain":.35, "fever":.15, "confusion":.20,
+            "rapid_breathing":.25, "dizziness":.30,
         },
     },
 
@@ -214,22 +215,41 @@ DISEASE_NAMES = list(DISEASES.keys())
 # ║  ENHANCED SYNTHETIC DATA GENERATOR                                     ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
 
-def generate_dataset(n_per_disease: int = 800):
+def generate_dataset(n_base: int = 800):
     """Generate medically-grounded synthetic patient data.
 
-    Improvements:
-    - Age sampled from disease-specific ranges
-    - Gender bias for diseases like anemia, UTI
-    - Symptom co-occurrence noise for realism
-    - More samples per disease for better training
+    Data sources used:
+    - WHO/CDC symptom probability profiles (in DISEASES dict)
+    - India DHS NFHS-5 prevalence weights (from medical_knowledge_base.json)
+    - Clinical vignettes from medical literature (from medical_knowledge_base.json)
+    - Age/gender correlation from epidemiological data
     """
     rows, labels = [], []
 
+    # Load medical knowledge base for prevalence weights + vignettes
+    kb_path = os.path.join(os.path.dirname(__file__), "data", "medical_knowledge_base.json")
+    prevalence_weights = {}
+    vignettes = []
+    if os.path.exists(kb_path):
+        with open(kb_path, encoding="utf-8") as f:
+            kb = json.load(f)
+        prevalence_weights = kb.get("india_prevalence_weights", {})
+        vignettes = kb.get("clinical_vignettes", [])
+        print(f"   📚 Loaded knowledge base: {len(vignettes)} vignettes, "
+              f"{len(prevalence_weights)} prevalence weights")
+    else:
+        print("   ℹ️  No knowledge base found — using default weights")
+
+    # ── 1. Generate weighted synthetic samples ────────────────────────────
     for idx, (name, info) in enumerate(DISEASES.items()):
         age_lo, age_hi = info.get("age_range", (1, 80))
         gender_bias = info.get("gender_bias", None)
 
-        for _ in range(n_per_disease):
+        # Apply India DHS prevalence weight
+        weight = prevalence_weights.get(name, 1.0)
+        n_samples = int(n_base * weight)
+
+        for _ in range(n_samples):
             # Age: sample from disease-typical range with some outliers
             if np.random.random() < 0.85:
                 age = np.random.randint(age_lo, age_hi + 1)
@@ -262,6 +282,33 @@ def generate_dataset(n_per_disease: int = 800):
             rows.append(row)
             labels.append(idx)
 
+    # ── 2. Inject clinical vignettes (real cases from literature) ─────────
+    n_vignettes = 0
+    for v in vignettes:
+        if v.get("is_red_flag"):
+            continue  # Red flags are handled by rule engine, not ML
+        disease = v["disease"]
+        if disease not in DISEASE_NAMES:
+            continue
+        idx = DISEASE_NAMES.index(disease)
+        # Create training row from vignette symptoms
+        row = {s: v["symptoms"].get(s, 0) for s in SYMPTOMS}
+        row["age"] = v["age"]
+        row["gender"] = v["gender"]
+        # Add multiple copies of each vignette (they're high-quality examples)
+        for _ in range(20):
+            # Add slight noise to symptoms not in profile (~5%)
+            noisy_row = row.copy()
+            for s in SYMPTOMS:
+                if noisy_row[s] == 0 and np.random.random() < 0.05:
+                    noisy_row[s] = 1
+            rows.append(noisy_row)
+            labels.append(idx)
+            n_vignettes += 1
+
+    if n_vignettes:
+        print(f"   📋 Injected {n_vignettes} clinical vignette samples")
+
     return pd.DataFrame(rows)[FEATURES], np.array(labels)
 
 
@@ -271,17 +318,50 @@ def generate_dataset(n_per_disease: int = 800):
 
 def main():
     print("=" * 60)
-    print("  Rural Health Triage — Enhanced Model Training (v2)")
+    print("  Rural Health Triage — Enhanced Model Training (v3)")
+    print("  Sources: WHO/CDC profiles + Kaggle datasets + DHS weights")
     print("=" * 60)
 
-    # ── 1. Generate dataset ───────────────────────────────────────────────
-    N_PER_DISEASE = 800
-    X, y = generate_dataset(N_PER_DISEASE)
-    total = len(X)
-    print(f"\n📊 Dataset: {total:,} samples  |  {len(DISEASE_NAMES)} diseases")
-    print(f"   Diseases: {', '.join(DISEASE_NAMES)}")
+    # ── 1. Generate synthetic dataset ─────────────────────────────────────
+    N_BASE = 800  # base samples per disease (weighted by India DHS prevalence)
+    X_syn, y_syn = generate_dataset(N_BASE)
+    print(f"\n📊 Synthetic data: {len(X_syn):,} samples")
 
-    # ── 2. Train/test split ───────────────────────────────────────────────
+    # ── 2. Load Kaggle real data (if available) ───────────────────────────
+    kaggle_path = os.path.join(os.path.dirname(__file__), "data", "kaggle_mapped.csv")
+    if os.path.exists(kaggle_path):
+        df_kaggle = pd.read_csv(kaggle_path)
+        print(f"📊 Kaggle real data: {len(df_kaggle):,} rows from {df_kaggle['_disease'].nunique()} diseases")
+
+        # Convert to X, y format
+        kaggle_rows = []
+        kaggle_labels = []
+        for _, row in df_kaggle.iterrows():
+            disease = row["_disease"]
+            if disease not in DISEASE_NAMES:
+                continue
+            idx = DISEASE_NAMES.index(disease)
+            kaggle_rows.append({f: row.get(f, 0) for f in FEATURES})
+            kaggle_labels.append(idx)
+
+        if kaggle_rows:
+            X_kaggle = pd.DataFrame(kaggle_rows)[FEATURES]
+            y_kaggle = np.array(kaggle_labels)
+
+            # Combine synthetic + real
+            X = pd.concat([X_syn, X_kaggle], ignore_index=True)
+            y = np.concatenate([y_syn, y_kaggle])
+            print(f"📊 Combined: {len(X):,} total samples (synthetic + real)")
+        else:
+            X, y = X_syn, y_syn
+    else:
+        X, y = X_syn, y_syn
+        print("   (No Kaggle data found — using synthetic only)")
+
+    total = len(X)
+    print(f"   {len(DISEASE_NAMES)} diseases  |  {len(FEATURES)} features")
+
+    # ── 3. Train/test split ───────────────────────────────────────────────
     X_tr, X_te, y_tr, y_te = train_test_split(
         X, y, test_size=0.20, random_state=42, stratify=y
     )
@@ -367,14 +447,56 @@ def main():
     with open("models/evaluation_report.json", "w") as f:
         json.dump(eval_report, f, indent=2)
 
-    # ── 9. Save training dataset for reproducibility ──────────────────────
+    # ── 9. ONNX Export (lightweight deployment) ─────────────────────────────
+    try:
+        from onnxmltools import convert_xgboost
+        from onnxmltools.convert.common.data_types import FloatTensorType
+        import onnx
+
+        # onnxmltools requires feature names as 'f0','f1',... format
+        # Temporarily set booster feature names and restore after
+        booster = model.get_booster()
+        original_names = booster.feature_names
+        booster.feature_names = [f"f{i}" for i in range(len(FEATURES))]
+
+        initial_type = [("input", FloatTensorType([None, len(FEATURES)]))]
+        onnx_model = convert_xgboost(model, initial_types=initial_type)
+        onnx_path = "models/triage_model.onnx"
+        onnx.save_model(onnx_model, onnx_path)
+        onnx_kb = os.path.getsize(onnx_path) / 1024
+        print(f"✅  ONNX model   →  {onnx_path}  ({onnx_kb:.0f} KB)")
+
+        # Restore original feature names
+        booster.feature_names = original_names
+    except ImportError:
+        print("   ℹ️  onnxmltools not installed — skipping ONNX export (pip install onnxmltools)")
+    except Exception as e:
+        print(f"   ⚠️  ONNX export failed: {e}")
+
+    # ── 10. Save training dataset for reproducibility ─────────────────────
     X_full = pd.concat([X_tr, X_te])
     y_full = np.concatenate([y_tr, y_te])
     X_full["label"] = y_full
     X_full["disease"] = X_full["label"].map(lambda i: DISEASE_NAMES[i])
     X_full.to_csv("models/training_data.csv", index=False)
 
-    # ── 10. Summary ───────────────────────────────────────────────────────
+    # ── 11. Emergency sensitivity check (spec: ≥80%) ─────────────────────
+    red_diseases = [n for n, d in DISEASES.items() if d["urgency"] == "RED"]
+    print(f"\n🚨 Emergency Sensitivity Check (target: ≥80%):")
+    all_pass = True
+    for d in red_diseases:
+        idx = DISEASE_NAMES.index(d)
+        recall = report_dict[d]["recall"]
+        status = "✅" if recall >= 0.80 else "❌ BELOW TARGET"
+        if recall < 0.80:
+            all_pass = False
+        print(f"   {status}  {d:25s}  recall = {recall:.1%}")
+    if all_pass:
+        print(f"   ✅ All RED diseases meet ≥80% sensitivity target!")
+    else:
+        print(f"   ⚠️  Some diseases below target — consider more training data")
+
+    # ── 12. Summary ───────────────────────────────────────────────────────
     kb = os.path.getsize("models/triage_model.json") / 1024
     print(f"\n{'='*60}")
     print(f"✅  Model         →  models/triage_model.json  ({kb:.0f} KB)")

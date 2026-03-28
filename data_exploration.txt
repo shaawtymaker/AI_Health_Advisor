@@ -1,0 +1,91 @@
+﻿============================================================
+1. Training.csv (Kaggle binary symptoms)
+============================================================
+   Shape: (4920, 134)
+   Symptom columns (132):
+     ['itching', 'skin_rash', 'nodal_skin_eruptions', 'continuous_sneezing', 'shivering', 'chills', 'joint_pain', 'stomach_pain']
+     ['acidity', 'ulcers_on_tongue', 'muscle_wasting', 'vomiting', 'burning_micturition', 'spotting_ urination', 'fatigue', 'weight_gain']
+     ['anxiety', 'cold_hands_and_feets', 'mood_swings', 'weight_loss', 'restlessness', 'lethargy', 'patches_in_throat', 'irregular_sugar_level']
+     ['cough', 'high_fever', 'sunken_eyes', 'breathlessness', 'sweating', 'dehydration', 'indigestion', 'headache']
+     ['yellowish_skin', 'dark_urine', 'nausea', 'loss_of_appetite', 'pain_behind_the_eyes', 'back_pain', 'constipation', 'abdominal_pain']
+     ['diarrhoea', 'mild_fever', 'yellow_urine', 'yellowing_of_eyes', 'acute_liver_failure', 'fluid_overload', 'swelling_of_stomach', 'swelled_lymph_nodes']
+     ['malaise', 'blurred_and_distorted_vision', 'phlegm', 'throat_irritation', 'redness_of_eyes', 'sinus_pressure', 'runny_nose', 'congestion']
+     ['chest_pain', 'weakness_in_limbs', 'fast_heart_rate', 'pain_during_bowel_movements', 'pain_in_anal_region', 'bloody_stool', 'irritation_in_anus', 'neck_pain']
+     ['dizziness', 'cramps', 'bruising', 'obesity', 'swollen_legs', 'swollen_blood_vessels', 'puffy_face_and_eyes', 'enlarged_thyroid']
+     ['brittle_nails', 'swollen_extremeties', 'excessive_hunger', 'extra_marital_contacts', 'drying_and_tingling_lips', 'slurred_speech', 'knee_pain', 'hip_joint_pain']
+     ['muscle_weakness', 'stiff_neck', 'swelling_joints', 'movement_stiffness', 'spinning_movements', 'loss_of_balance', 'unsteadiness', 'weakness_of_one_body_side']
+     ['loss_of_smell', 'bladder_discomfort', 'foul_smell_of urine', 'continuous_feel_of_urine', 'passage_of_gases', 'internal_itching', 'toxic_look_(typhos)', 'depression']
+     ['irritability', 'muscle_pain', 'altered_sensorium', 'red_spots_over_body', 'belly_pain', 'abnormal_menstruation', 'dischromic _patches', 'watering_from_eyes']
+     ['increased_appetite', 'polyuria', 'family_history', 'mucoid_sputum', 'rusty_sputum', 'lack_of_concentration', 'visual_disturbances', 'receiving_blood_transfusion']
+     ['receiving_unsterile_injections', 'coma', 'stomach_bleeding', 'distention_of_abdomen', 'history_of_alcohol_consumption', 'fluid_overload.1', 'blood_in_sputum', 'prominent_veins_on_calf']
+     ['palpitations', 'painful_walking', 'pus_filled_pimples', 'blackheads', 'scurring', 'skin_peeling', 'silver_like_dusting', 'small_dents_in_nails']
+     ['inflammatory_nails', 'blister', 'red_sore_around_nose', 'yellow_crust_ooze']
+
+   Diseases (41):
+     - (vertigo) Paroymsal  Positional Vertigo (120 rows)
+     - AIDS (120 rows)
+     - Acne (120 rows)
+     - Alcoholic hepatitis (120 rows)
+     - Allergy (120 rows)
+     - Arthritis (120 rows)
+     - Bronchial Asthma (120 rows)
+     - Cervical spondylosis (120 rows)
+     - Chicken pox (120 rows)
+     - Chronic cholestasis (120 rows)
+     - Common Cold (120 rows)
+     - Dengue (120 rows)
+     - Diabetes  (120 rows)
+     - Dimorphic hemmorhoids(piles) (120 rows)
+     - Drug Reaction (120 rows)
+     - Fungal infection (120 rows)
+     - GERD (120 rows)
+     - Gastroenteritis (120 rows)
+     - Heart attack (120 rows)
+     - Hepatitis B (120 rows)
+     - Hepatitis C (120 rows)
+     - Hepatitis D (120 rows)
+     - Hepatitis E (120 rows)
+     - Hypertension  (120 rows)
+     - Hyperthyroidism (120 rows)
+     - Hypoglycemia (120 rows)
+     - Hypothyroidism (120 rows)
+     - Impetigo (120 rows)
+     - Jaundice (120 rows)
+     - Malaria (120 rows)
+     - Migraine (120 rows)
+     - Osteoarthristis (120 rows)
+     - Paralysis (brain hemorrhage) (120 rows)
+     - Peptic ulcer diseae (120 rows)
+     - Pneumonia (120 rows)
+     - Psoriasis (120 rows)
+     - Tuberculosis (120 rows)
+     - Typhoid (120 rows)
+     - Urinary tract infection (120 rows)
+     - Varicose veins (120 rows)
+     - hepatitis A (120 rows)
+
+============================================================
+2. Symptom2Disease.csv (NLP text)
+============================================================
+   Shape: (1200, 3)
+   Columns: ['Unnamed: 0', 'label', 'text']
+   Diseases: ['Acne', 'Arthritis', 'Bronchial Asthma', 'Cervical spondylosis', 'Chicken pox', 'Common Cold', 'Dengue', 'Dimorphic Hemorrhoids', 'Fungal infection', 'Hypertension', 'Impetigo', 'Jaundice', 'Malaria', 'Migraine', 'Pneumonia', 'Psoriasis', 'Typhoid', 'Varicose Veins', 'allergy', 'diabetes', 'drug reaction', 'gastroesophageal reflux disease', 'peptic ulcer disease', 'urinary tract infection']
+   Sample row:
+     {'Unnamed: 0': 0, 'label': 'Psoriasis', 'text': 'I have been experiencing a skin rash on my arms, legs, and torso for the past few weeks. It is red, itchy, and covered in dry, scaly patches.'}
+
+============================================================
+3. Disease_symptom_and_patient_profile.csv
+============================================================
+   Shape: (349, 10)
+   Columns: ['Disease', 'Fever', 'Cough', 'Fatigue', 'Difficulty Breathing', 'Age', 'Gender', 'Blood Pressure', 'Cholesterol Level', 'Outcome Variable']
+   Diseases: ['Acne', 'Allergic Rhinitis', "Alzheimer's Disease", 'Anemia', 'Anxiety Disorders', 'Appendicitis', 'Asthma', 'Atherosclerosis', 'Autism Spectrum Disorder (ASD)', 'Bipolar Disorder', 'Bladder Cancer', 'Brain Tumor', 'Breast Cancer', 'Bronchitis', 'Cataracts', 'Cerebral Palsy', 'Chickenpox', 'Cholecystitis', 'Cholera', 'Chronic Kidney Disease', 'Chronic Obstructive Pulmonary Disease (COPD)', 'Chronic Obstructive Pulmonary...', 'Cirrhosis', 'Colorectal Cancer', 'Common Cold', 'Conjunctivitis (Pink Eye)', 'Coronary Artery Disease', "Crohn's Disease", 'Cystic Fibrosis', 'Dementia', 'Dengue Fever', 'Depression', 'Diabetes', 'Diverticulitis', 'Down Syndrome', 'Eating Disorders (Anorexia,...', 'Ebola Virus', 'Eczema', 'Endometriosis', 'Epilepsy', 'Esophageal Cancer', 'Fibromyalgia', 'Gastroenteritis', 'Glaucoma', 'Gout', 'HIV/AIDS', 'Hemophilia', 'Hemorrhoids', 'Hepatitis', 'Hepatitis B', 'Hyperglycemia', 'Hypertension', 'Hypertensive Heart Disease', 'Hyperthyroidism', 'Hypoglycemia', 'Hypothyroidism', 'Influenza', 'Kidney Cancer', 'Kidney Disease', 'Klinefelter Syndrome', 'Liver Cancer', 'Liver Disease', 'Lung Cancer', 'Lyme Disease', 'Lymphoma', 'Malaria', 'Marfan Syndrome', 'Measles', 'Melanoma', 'Migraine', 'Multiple Sclerosis', 'Mumps', 'Muscular Dystrophy', 'Myocardial Infarction (Heart...', 'Obsessive-Compulsive Disorde...', 'Osteoarthritis', 'Osteomyelitis', 'Osteoporosis', 'Otitis Media (Ear Infection)', 'Ovarian Cancer', 'Pancreatic Cancer', 'Pancreatitis', "Parkinson's Disease", 'Pneumocystis Pneumonia (PCP)', 'Pneumonia', 'Pneumothorax', 'Polio', 'Polycystic Ovary Syndrome (PCOS)', 'Prader-Willi Syndrome', 'Prostate Cancer', 'Psoriasis', 'Rabies', 'Rheumatoid Arthritis', 'Rubella', 'Schizophrenia', 'Scoliosis', 'Sepsis', 'Sickle Cell Anemia', 'Sinusitis', 'Sleep Apnea', 'Spina Bifida', 'Stroke', 'Systemic Lupus Erythematosus...', 'Testicular Cancer', 'Tetanus', 'Thyroid Cancer', 'Tonsillitis', 'Tourette Syndrome', 'Tuberculosis', 'Turner Syndrome', 'Typhoid Fever', 'Ulcerative Colitis', 'Urinary Tract Infection', 'Urinary Tract Infection (UTI)', 'Williams Syndrome', 'Zika Virus']
+   Sample:
+     {'Disease': 'Influenza', 'Fever': 'Yes', 'Cough': 'No', 'Fatigue': 'Yes', 'Difficulty Breathing': 'Yes', 'Age': 19, 'Gender': 'Female', 'Blood Pressure': 'Low', 'Cholesterol Level': 'Normal', 'Outcome Variable': 'Positive'}
+
+============================================================
+4. sym_dis_matrix.csv
+============================================================
+   Shape: (131, 110)
+   Columns (first 10): ['eye', '5.0', '14.0', '25.0', '26.0', '71.0', '82.0', '85.0', '98.0', '107.0']
+   Sample:
+     {'eye': 1.0, '5.0': 0.0, '14.0': 0.0, '25.0': 0.0, '26.0': 0.0, '71.0': 0.0, '82.0': 0.0, '85.0': 0.0, '98.0': 0.0, '107.0': 0.0, '136.0': 0.0, '144.0': 0.0, '146.0': 0.0, '162.0': 0.0, '163.0': 3.0, '164.0': 3.0, '165.0': 3.0, '172.0': 0.0, '186.0': 0.0, '192.0': 0.0, '193.0': 0.0, '213.0': 0.0, '214.0': 0.0, '300.0': 0.0, '319.0': 0.0, '330.0': 0.0, '347.0': 0.0, '358.0': 0.0, '370.0': 0.0, '405.0': 0.0, '424.0': 0.0, '447.0': 0.0, '454.0': 0.0, '468.0': 0.0, '469.0': 0.0, '483.0': 0.0, '508.0': 0.0, '523.0': 0.0, '524.0': 0.0, '527.0': 0.0, '528.0': 0.0, '529.0': 0.0, '545.0': 0.0, '563.0': 0.0, '576.0': 0.0, '606.0': 0.0, '638.0': 0.0, '641.0': 0.0, '679.0': 0.0, '704.0': 0.0, '728.0': 0.0, '743.0': 0.0, '748.0': 0.0, '756.0': 0.0, '774.0': 0.0, '775.0': 0.0, '777.0': 0.0, '799.0': 0.0, '814.0': 0.0, '829.0': 0.0, '848.0': 0.0, '852.0': 0.0, '867.0': 0.0, '870.0': 0.0, '873.0': 0.0, '874.0': 0.0, '879.0': 0.0, '895.0': 0.0, '903.0': 0.0, '918.0': 0.0, '926.0': 0.0, '951.0': 0.0, '992.0': 0.0, '1001.0': 0.0, '1003.0': 0.0, '1004.0': 0.0, '1022.0': 0.0, '1026.0': 0.0, '1027.0': 0.0, '1052.0': 0.0, '1081.0': 0.0, '1083.0': 0.0, '1102.0': 0.0, '1108.0': 0.0, '1134.0': 0.0, '1136.0': 0.0, '1249.0': 0.0, '1255.0': 0.0, '1267.0': 3.0, '1283.0': 0.0, '1295.0': 0.0, '1299.0': 0.0, '1303.0': 0.0, '1305.0': 0.0, '1315.0': 0.0, '1349.0': 0.0, '1353.0': 0.0, '1355.0': 0.0, '1357.0': 0.0, '1363.0': 0.0, '1365.0': 0.0, '1367.0': 0.0, '1395.0': 0.0, '1397.0': 0.0, '1461.0': 0.0, '1473.0': 0.0, '1475.0': 0.0, '1479.0': 0.0, '1483.0': 0.0, '1511.0': 0.0}
