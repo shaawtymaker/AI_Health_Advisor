@@ -1,23 +1,176 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Rural Health Triage</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="static/css/styles.css">
+    
+    <!-- Spline Viewer -->
     <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.73/build/spline-viewer.js"></script>
 </head>
+<body>
 
-<body style="margin:0; overflow:hidden; font-family:sans-serif;">
-
-    <!-- Spline Background -->
-    <spline-viewer url="https://prod.spline.design/7ohTQ7xSwBJYrxue/scene.splinecode"
-        style="position:fixed; top:0; left:0; width:100%; height:100vh; z-index:-1;">
-    </spline-viewer>
-
-    <!-- Your UI -->
-    <div style="position:relative; z-index:1; color:white; padding:40px;">
-        <h1>🚀 My AI Project</h1>
-        <button onclick="fetch('/api')">Run Model</button>
+    <!-- Dynamic 3D Spline Background -->
+    <div class="spline-container">
+        <spline-viewer url="https://prod.spline.design/7ohTQ7xSwBJYrxue/scene.splinecode"></spline-viewer>
+        <div class="glass-overlay"></div>
     </div>
 
-</body>
+    <!-- Main App Container (Glassmorphism PWA Window) -->
+    <main class="app-container">
+        
+        <!-- ================= PAGE 1 ================= -->
+        <!-- Splash / Welcome Screen -->
+        <section id="page-splash" class="page active">
+            <div class="logo">🏥</div>
+            <h1>Rural Health Triage</h1>
+            <p class="subtitle" id="splash-subtitle">AI-powered offline symptom checker. Tell us what's wrong, get immediate medical guidance.</p>
+            
+            <div class="input-group">
+                <label for="lang-select">Language / भाषा</label>
+                <select id="lang-select">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                </select>
+            </div>
+            
+            <button class="btn btn-primary animate-pop" id="btn-start">Start Triage 🚀</button>
+            <p class="disclaimer">100% Offline • No data leaves your device.</p>
+        </section>
 
+
+        <!-- ================= PAGE 2 ================= -->
+        <!-- Assessment / Input Screen -->
+        <section id="page-input" class="page hidden">
+            <header class="app-header">
+                <button class="btn-icon" id="btn-back-1">←</button>
+                <h2 id="header-assessment">Assessment</h2>
+                <div style="width: 32px;"></div> <!-- visual balance -->
+            </header>
+
+            <div class="scroll-content">
+                <div class="row">
+                    <div class="input-group half">
+                        <label id="lbl-age" for="age-input">Age</label>
+                        <input type="number" id="age-input" placeholder="e.g. 30" value="30" min="0" max="120">
+                    </div>
+                    
+                    <div class="input-group half">
+                        <label id="lbl-gender" for="gender-input">Gender</label>
+                        <select id="gender-input">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label id="lbl-symptoms" for="symptom-input">What are your symptoms?</label>
+                    <div class="textarea-wrapper">
+                        <textarea id="symptom-input" rows="4" placeholder="e.g. High fever for 3 days, severe headache, and vomiting."></textarea>
+                        
+                        <!-- Voice Mic Button -->
+                        <button class="btn-mic" id="btn-mic" title="Record Voice">
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                        </button>
+                    </div>
+                    <div id="mic-status" class="mic-status hidden">Listening...</div>
+                </div>
+
+                <!-- Fast Symptom Checklist (Chips) -->
+                <div class="chip-container" id="symptom-chips">
+                    <button class="chip" data-val="fever">🌡️ Fever</button>
+                    <button class="chip" data-val="headache">🤕 Headache</button>
+                    <button class="chip" data-val="cough">😷 Cough</button>
+                    <button class="chip" data-val="vomiting">🤢 Vomiting</button>
+                    <button class="chip" data-val="stomach pain">💥 Stomach Pain</button>
+                    <button class="chip" data-val="rash">🔴 Rash</button>
+                </div>
+
+                <button class="btn btn-primary animate-pop mt-2" id="btn-evaluate">Evaluate Symptoms 🩺</button>
+            </div>
+            
+            <!-- Loading Overlay -->
+            <div id="loading-overlay" class="loading-overlay hidden">
+                <div class="spinner"></div>
+                <p id="loading-text">Analyzing securely on device...</p>
+            </div>
+        </section>
+
+
+        <!-- ================= PAGE 3 ================= -->
+        <!-- Triage Result Screen -->
+        <section id="page-result" class="page hidden">
+            <header class="app-header">
+                <button class="btn-icon" id="btn-restart">↻</button>
+                <h2 id="header-result">Triage Result</h2>
+                <div style="width: 32px;"></div>
+            </header>
+
+            <div class="scroll-content pt-0">
+                
+                <!-- Dynamic Follow-Up Prompt -->
+                <div id="followup-box" class="glass-card hidden" style="border-color: var(--warn); margin-bottom: 1rem;">
+                    <h4 style="color: var(--warn);">🤔 Need more info...</h4>
+                    <p id="followup-text" style="color: white; font-weight: 500; font-size: 1.1rem;"></p>
+                </div>
+
+                <!-- Urgency Banner (Colors injected dynamically) -->
+                <div id="urgency-banner" class="urgency-banner">
+                    <span id="urgency-icon">🟡</span>
+                    <span id="urgency-label">See a Doctor Soon</span>
+                </div>
+
+                <!-- Main Diagnosis Card -->
+                <div class="glass-card">
+                    <h3 class="condition-title" id="disease-name">Disease Name</h3>
+                    <p class="confidence">Confidence: <span id="disease-confidence">85%</span> | Severity Score: <span id="severity-score">0</span></p>
+                    <p class="explanation" id="disease-explanation">Explanation text goes here...</p>
+                    <div class="shap-factors" id="shap-factors">
+                        <!-- SHAP features injected here -->
+                    </div>
+                </div>
+
+                <!-- Action Steps / Advice -->
+                <div class="glass-card mt-2">
+                    <h4 id="lbl-advice">💊 Medical Advice</h4>
+                    <p id="advice-text" class="advice-html">Detailed advice and instructions will appear here.</p>
+                </div>
+
+                <!-- Top 3 Differential -->
+                <div class="glass-card mt-2" id="differential-box">
+                    <h4 id="lbl-diff">📋 Other Possibilities</h4>
+                    <ul id="differential-list" class="diff-list">
+                        <!-- LIs injected here -->
+                    </ul>
+                </div>
+
+                <!-- Local Clinics -->
+                <div class="glass-card mt-2" id="clinics-box">
+                    <h4 id="lbl-clinics">🏥 Nearest Clinics</h4>
+                    <ul id="clinics-list" class="clinic-list">
+                        <!-- LIs injected here -->
+                    </ul>
+                </div>
+
+                <p class="disclaimer mt-2">⚠️ This is a guide, not a diagnosis. Always consult a health worker.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="static/js/app.js" type="module"></script>
+</body>
 </html>

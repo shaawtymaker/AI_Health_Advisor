@@ -1,0 +1,19 @@
+{
+  "title": "# 🏥 Rural Health Triage Assistant",
+  "subtitle": "### AI-powered offline symptom checker · English + Hindi\n*Tell us your symptoms — get instant guidance.*\n---",
+  "lang_label": "Language / भाषा",
+  "age_label": "Age",
+  "gender_label": "Gender",
+  "gender_choices": [
+    "Male",
+    "Female"
+  ],
+  "symptom_label": "Symptoms 🩺",
+  "symptom_placeholder": "Describe symptoms… e.g. 'fever, headache, chills'",
+  "voice_label": "🎤 Voice Input (optional — record your symptoms)",
+  "submit": "🔍  Check",
+  "result_label": "Result",
+  "audio_label": "🔊 Listen to Advice",
+  "examples_label": "📝 Try these test cases",
+  "footer": "---\n*Model: XGBoost (<1 MB) · 100% offline · No data stored · Not a medical device — always consult a health professional.*"
+}

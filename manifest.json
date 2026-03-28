@@ -1,0 +1,17 @@
+{
+  "name": "Rural Health Triage Assistant",
+  "short_name": "Health Triage",
+  "description": "AI-powered offline symptom checker for rural areas.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    {
+      "src": "static/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -5,23 +5,41 @@ Provides both live-mic and file-based transcription.
 
 import json, os, wave
 
+_voice_dir = os.path.dirname(__file__)
+
 MODEL_PATHS = {
-    "hi": os.path.join(os.path.dirname(__file__), "vosk-model-hi-0.22", "vosk-model-hi-0.22"),
-    "en": os.path.join(os.path.dirname(__file__), "vosk-model-small-en-us-0.15")
+    "hi": [
+        os.path.join(_voice_dir, "vosk-model-hi-0.22"),
+        os.path.join(_voice_dir, "vosk-model-hi-0.22", "vosk-model-hi-0.22"),
+        "voice/vosk-model-hi-0.22"
+    ],
+    "en": [
+        os.path.join(_voice_dir, "vosk-model-small-en-us-0.15"),
+        "voice/vosk-model-small-en-us-0.15"
+    ]
 }
 
 _models = {}
 
 def _get_model(lang="en"):
-    """Lazy-load the Vosk model (heavy). Cache by lang."""
+    """Search for and lazy-load the Vosk model."""
     if lang not in _models:
         from vosk import Model
-        path = MODEL_PATHS.get(lang)
-        if not path or not os.path.isdir(path):
+        options = MODEL_PATHS.get(lang, [])
+        found_path = None
+        for p in options:
+            if os.path.isdir(p):
+                found_path = p
+                break
+        
+        if not found_path:
             raise FileNotFoundError(
-                f"Vosk {lang} model not found at {path}."
+                f"Vosk {lang} model not found. "
+                f"Please download from alphacephei.com/vosk/models and unzip into 'voice/' folder."
             )
-        _models[lang] = Model(path)
+        
+        print(f"Loading Vosk {lang} model from {found_path}...")
+        _models[lang] = Model(found_path)
     return _models[lang]
 
 def transcribe_audio_file(filepath: str, lang: str = "en") -> str:

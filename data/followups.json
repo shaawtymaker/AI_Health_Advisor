@@ -1,0 +1,27 @@
+{
+  "fever": {
+    "en": "How many days have you had the fever? Is it continuous or does it come and go?",
+    "hi": "बुखार कितने दिनों से है? क्या यह लगातार रहता है या उतर-चढ़ कर आता है?",
+    "trigger_if_missing": ["duration", "chills", "sweating"]
+  },
+  "cough": {
+    "en": "Are you coughing up any blood or yellow/green phlegm?",
+    "hi": "क्या खांसी के साथ खून या पीला/हरा बलगम आ रहा है?",
+    "trigger_if_missing": ["blood_in_sputum", "difficulty_breathing"]
+  },
+  "diarrhea": {
+    "en": "Is there any blood in your stool? How many times have you gone today?",
+    "hi": "क्या मल में खून है? आज आप कितनी बार शौच गए हैं?",
+    "trigger_if_missing": ["bleeding", "vomiting", "dehydration_signs"]
+  },
+  "abdominal_pain": {
+    "en": "Is the stomach pain severe? Are you also vomiting or unable to eat?",
+    "hi": "क्या पेट दर्द बहुत तेज़ है? क्या आपको उल्टी भी हो रही है या आप कुछ खा नहीं पा रहे?",
+    "trigger_if_missing": ["vomiting", "nausea", "diarrhea"]
+  },
+  "headache": {
+    "en": "Is the headache severe, or accompanied by eye pain/stiff neck?",
+    "hi": "क्या सिर दर्द बहुत तेज़ है, या आँखों के पीछे दर्द/गर्दन में अकड़न भी है?",
+    "trigger_if_missing": ["severe_headache", "eye_pain", "fever"]
+  }
+}

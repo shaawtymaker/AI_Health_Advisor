@@ -1,0 +1,92 @@
+{
+  "malaria": {
+    "en": "Malaria",
+    "hi": "मलेरिया",
+    "adv_en": "High risk of malaria. Go to hospital immediately for a blood test. Use mosquito net.",
+    "adv_hi": "मलेरिया का उच्च जोखिम। तुरंत अस्पताल जाएं और खून की जांच कराएं। मच्छरदानी का प्रयोग करें।"
+  },
+  "dengue": {
+    "en": "Dengue",
+    "hi": "डेंगू",
+    "adv_en": "Possible dengue fever. See doctor immediately. Drink plenty of fluids. Watch for bleeding or bruising.",
+    "adv_hi": "संभावित डेंगू बुखार। तुरंत डॉक्टर को दिखाएं। खूब पानी पिएं। रक्तस्राव पर ध्यान दें।"
+  },
+  "typhoid": {
+    "en": "Typhoid",
+    "hi": "टाइफाइड",
+    "adv_en": "Possible typhoid. See a doctor soon for Widal/blood test. Drink only boiled water.",
+    "adv_hi": "संभावित टाइफाइड। जल्द डॉक्टर को दिखाएं। केवल उबला पानी पिएं।"
+  },
+  "tuberculosis": {
+    "en": "Tuberculosis (TB)",
+    "hi": "क्षय रोग (टीबी)",
+    "adv_en": "Symptoms suggest TB. Visit clinic for sputum test. TB is curable with 6-month medicine.",
+    "adv_hi": "लक्षण टीबी के हो सकते हैं। बलगम जांच के लिए क्लिनिक जाएं। 6 महीने की दवा से ठीक हो सकता है।"
+  },
+  "pneumonia": {
+    "en": "Pneumonia",
+    "hi": "निमोनिया",
+    "adv_en": "Possible pneumonia — breathing difficulty is serious. Seek medical care urgently.",
+    "adv_hi": "संभावित निमोनिया — सांस की तकलीफ गंभीर है। तुरंत चिकित्सा सहायता लें।"
+  },
+  "common_cold": {
+    "en": "Common Cold",
+    "hi": "सामान्य सर्दी",
+    "adv_en": "Likely a common cold. Rest, drink warm fluids, take paracetamol if feverish. See doctor if no improvement in 3 days.",
+    "adv_hi": "सामान्य सर्दी लगती है। आराम करें, गर्म पानी पिएं, बुखार हो तो पैरासिटामॉल लें। 3 दिन में ठीक न हो तो डॉक्टर को दिखाएं।"
+  },
+  "gastroenteritis": {
+    "en": "Stomach Infection",
+    "hi": "पेट का संक्रमण",
+    "adv_en": "Stomach infection likely. Drink ORS and boiled water. See doctor if vomiting persists or blood in stool.",
+    "adv_hi": "पेट का संक्रमण हो सकता है। ORS और उबला पानी पिएं। उल्टी बंद न हो या मल में खून हो तो डॉक्टर को दिखाएं।"
+  },
+  "anemia": {
+    "en": "Anemia",
+    "hi": "खून की कमी",
+    "adv_en": "Signs of anemia (low blood). Eat iron-rich food (spinach, jaggery, eggs). Visit clinic for blood test.",
+    "adv_hi": "खून की कमी के लक्षण। लोहे से भरपूर भोजन खाएं (पालक, गुड़, अंडे)। खून की जांच कराएं।"
+  },
+  "heat_stroke": {
+    "en": "Heat Stroke",
+    "hi": "लू लगना",
+    "adv_en": "Possible heat stroke. Move to shade, cool the body with wet cloth, give water. Go to hospital if confused.",
+    "adv_hi": "लू लगने के लक्षण। छाया में जाएं, गीले कपड़े से शरीर ठंडा करें, पानी दें। बेहोशी हो तो अस्पताल जाएं।"
+  },
+  "flu": {
+    "en": "Influenza (Flu)",
+    "hi": "फ्लू",
+    "adv_en": "Likely flu. Rest, drink fluids, take paracetamol for fever. See doctor if symptoms worsen after 3 days.",
+    "adv_hi": "फ्लू हो सकता है। आराम करें, तरल पदार्थ पिएं। 3 दिन बाद भी ठीक न हो तो डॉक्टर को दिखाएं।"
+  },
+  "cholera": {
+    "en": "Cholera",
+    "hi": "हैजा",
+    "adv_en": "Possible cholera — severe dehydration risk. Drink ORS immediately. Go to hospital NOW for IV fluids.",
+    "adv_hi": "संभावित हैजा — गंभीर निर्जलीकरण का खतरा। तुरंत ORS पिएं। IV तरल पदार्थ के लिए अभी अस्पताल जाएं।"
+  },
+  "jaundice": {
+    "en": "Jaundice / Hepatitis",
+    "hi": "पीलिया",
+    "adv_en": "Signs of jaundice/hepatitis. Avoid oily food, drink boiled water. See doctor for liver function test.",
+    "adv_hi": "पीलिया के लक्षण। तला हुआ खाना बंद करें, उबला पानी पिएं। लिवर जांच के लिए डॉक्टर को दिखाएं।"
+  },
+  "urinary_tract_infection": {
+    "en": "Urinary Tract Infection (UTI)",
+    "hi": "मूत्र मार्ग संक्रमण",
+    "adv_en": "Possible UTI. Drink plenty of water. See doctor for urine test — antibiotics may be needed.",
+    "adv_hi": "संभावित मूत्र संक्रमण। खूब पानी पिएं। पेशाब जांच के लिए डॉक्टर को दिखाएं।"
+  },
+  "asthma_attack": {
+    "en": "Asthma Attack",
+    "hi": "दमा का दौरा",
+    "adv_en": "Signs of asthma attack. Sit upright, use inhaler if available. Seek medical help if breathing doesn't improve.",
+    "adv_hi": "दमा के दौरे के लक्षण। सीधे बैठें, इन्हेलर उपलब्ध हो तो उपयोग करें। सांस न सुधरे तो चिकित्सा सहायता लें।"
+  },
+  "chickenpox": {
+    "en": "Chickenpox",
+    "hi": "चिकनपॉक्स (छोटी माता)",
+    "adv_en": "Likely chickenpox. Keep rash clean, avoid scratching. Take paracetamol for fever. Stay isolated to prevent spread.",
+    "adv_hi": "चिकनपॉक्स लगती है। दानों को साफ रखें, खुजाएं नहीं। बुखार हो तो पैरासिटामॉल लें। फैलने से रोकने के लिए अलग रहें।"
+  }
+}
