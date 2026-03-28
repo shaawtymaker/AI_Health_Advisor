@@ -42,3 +42,8 @@ models/training_data.csv
 # Environment
 .env
 .env.local
+
+# Data / Logs
+data/*.csv
+!data/medical_knowledge_base.json
+data/_*.txt
