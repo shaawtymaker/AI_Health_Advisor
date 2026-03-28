@@ -1,49 +1,74 @@
+# ═══════════════════════════════════════════════════════
 # Python
+# ═══════════════════════════════════════════════════════
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
+*.pyo
 *.egg-info/
 dist/
 build/
 *.egg
 
-# Virtual environments
-venv/
+# Virtual Environments
 .venv/
+venv/
 env/
+ENV/
 
-# IDE
+# ═══════════════════════════════════════════════════════
+# Vosk ASR Models (large binaries, 40–450 MB each)
+# Users should run: python scripts/setup_vosk.py
+# ═══════════════════════════════════════════════════════
+voice/vosk-model-*/
+vosk-model-*/
+
+# ═══════════════════════════════════════════════════════
+# ML Training Artifacts (regenerated via train_model.py)
+# ═══════════════════════════════════════════════════════
+models/training_data.csv
+
+# ═══════════════════════════════════════════════════════
+# Temporary Audio Files (created during voice processing)
+# ═══════════════════════════════════════════════════════
+*.wav
+*.webm
+*.ogg
+*.mp3
+!static/**/*.wav
+!static/**/*.mp3
+
+# ═══════════════════════════════════════════════════════
+# Data Exploration Logs (developer scratch files)
+# ═══════════════════════════════════════════════════════
+data/_*.txt
+data_exploration.txt
+
+# ═══════════════════════════════════════════════════════
+# IDE & Editor
+# ═══════════════════════════════════════════════════════
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.classpath
+.settings/
 
-# OS
-Thumbs.db
-Desktop.ini
+# ═══════════════════════════════════════════════════════
+# OS Generated
+# ═══════════════════════════════════════════════════════
 .DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Vosk model (large, ~50 MB — download separately)
-vosk-model-*/
-
-# Large model binary (retrain locally via train_model.py)
-models/triage_model.json
-models/triage_model.onnx
-models/training_data.csv
-
-# TTS temp files
-*.wav
-
-# Logs
+# ═══════════════════════════════════════════════════════
+# Miscellaneous
+# ═══════════════════════════════════════════════════════
 *.log
-
-# Environment
+logs/
+tmp/
 .env
 .env.local
-
-# Data / Logs
-data/*.csv
-!data/medical_knowledge_base.json
-data/_*.txt

@@ -19,6 +19,7 @@ const btnBack1 = document.getElementById('btn-back-1');
 const btnRestart = document.getElementById('btn-restart');
 const btnEvaluate = document.getElementById('btn-evaluate');
 const btnMic = document.getElementById('btn-mic');
+const btnSpeak = document.getElementById('btn-speak');
 const micStatus = document.getElementById('mic-status');
 
 const langSelect = document.getElementById('lang-select');
@@ -32,6 +33,7 @@ let currentLang = 'en';
 let isRecording = false;
 let mediaRecorder = null;
 let audioChunks = [];
+let speechContent = ""; // For results TTS
 
 // Dictionary for simple UI swaps
 const i18n = {
@@ -119,6 +121,35 @@ document.querySelectorAll('.chip').forEach(chip => {
     });
 });
 
+// ── Speech Synthesis (TTS) ───────────────────────────────────────
+function speak(text) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = currentLang === 'hi' ? 'hi-IN' : 'en-US';
+    utterance.rate = 0.9;
+    
+    // Voice selection
+    const voices = window.speechSynthesis.getVoices();
+    const voice = voices.find(v => v.lang.startsWith(currentLang));
+    if (voice) utterance.voice = voice;
+
+    utterance.onstart = () => btnSpeak.innerText = "⏹️";
+    utterance.onend = () => btnSpeak.innerText = "🔊";
+    utterance.onerror = () => btnSpeak.innerText = "🔊";
+    window.speechSynthesis.speak(utterance);
+}
+
+function stopSpeaking() {
+    window.speechSynthesis.cancel();
+    btnSpeak.innerText = "🔊";
+}
+
+btnSpeak.addEventListener('click', () => {
+    if (window.speechSynthesis.speaking) stopSpeaking();
+    else speak(speechContent);
+});
+
 // ── Helper: Markdown to simple HTML ──────────────────────────────
 function parseMarkdown(md) {
     if(!md) return "";
@@ -192,10 +223,12 @@ function renderResult(data) {
     
     const labelsEn = {"RED": "URGENT — GO TO HOSPITAL NOW", "YELLOW": "SEE DOCTOR SOON", "GREEN": "HOME CARE — MONITOR", "NONE": "UNKNOWN"};
     const labelsHi = {"RED": "गंभीर — तुरंत अस्पताल जाएं", "YELLOW": "जल्द डॉक्टर को दिखाएं", "GREEN": "घर पर देखभाल — निगरानी रखें", "NONE": "अज्ञात"};
-    document.getElementById('urgency-label').innerText = currentLang === 'en' ? labelsEn[data.urgency] : labelsHi[data.urgency];
+    const urgencyText = currentLang === 'en' ? labelsEn[data.urgency] || labelsEn["NONE"] : labelsHi[data.urgency] || labelsHi["NONE"];
+    document.getElementById('urgency-label').innerText = urgencyText;
 
     // Card Details
-    document.getElementById('disease-name').innerText = data.disease || (currentLang === 'en' ? "Uncertain" : "अनिश्चित");
+    const diseaseName = data.disease || (currentLang === 'en' ? "Uncertain" : "अनिश्चित");
+    document.getElementById('disease-name').innerText = diseaseName;
     document.getElementById('disease-confidence').innerText = `${(data.confidence * 100).toFixed(0)}%`;
     document.getElementById('severity-score').innerText = data.severity_score || "0";
     document.getElementById('disease-explanation').innerHTML = parseMarkdown(data.explanation);
@@ -205,7 +238,15 @@ function renderResult(data) {
     shapEl.style.display = data.shap_text ? "block" : "none";
 
     // Advice
-    document.getElementById('advice-text').innerHTML = parseMarkdown(data.advice);
+    const adviceText = data.advice || "";
+    document.getElementById('advice-text').innerHTML = parseMarkdown(adviceText);
+
+    // Prepare Speech Content
+    if (currentLang === 'en') {
+        speechContent = `The potential condition is ${diseaseName}. Urgency level is ${urgencyText}. Medical advice: ${adviceText.replace(/\*/g, '')}`;
+    } else {
+        speechContent = `संभावित बीमारी ${diseaseName} है। तत्कालता का स्तर ${urgencyText} है। चिकित्सा सलाह: ${adviceText.replace(/\*/g, '')}`;
+    }
 
     // Differential
     const diffList = document.getElementById('differential-list');

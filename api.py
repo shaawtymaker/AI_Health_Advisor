@@ -13,9 +13,16 @@ from engine.formatter import format_result
 from voice.stt import transcribe_audio_file
 import tempfile
 import traceback
+import static_ffmpeg
+
 try:
     from pydub import AudioSegment
+    # Automatic FFmpeg Setup
+    static_ffmpeg.add_paths()
 except ImportError:
+    AudioSegment = None
+except Exception as e:
+    print(f"Warning: static-ffmpeg initialization failed: {e}")
     AudioSegment = None
 
 app = FastAPI(
@@ -117,10 +124,11 @@ async def triage_voice(file: UploadFile = File(...), lang: str = Form("en")):
             audio = AudioSegment.from_file(temp_raw)
             audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
             audio.export(temp_wav, format="wav")
+            print(f"Audio conversion succeeded: {temp_wav}")
         except Exception as e:
-            msg = "FFmpeg missing or invalid audio format."
-            print(f"Conversion failed: {e}")
-            return {"error": msg, "text": f"Error: {msg}"}
+            msg = f"Audio conversion failed: {str(e)}"
+            print(msg)
+            return {"error": "FFmpeg missing or invalid audio format.", "text": f"Error: {msg}"}
 
         # 3. Transcribe
         txt = transcribe_audio_file(temp_wav, lang=lang)
